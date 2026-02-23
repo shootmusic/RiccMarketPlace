@@ -19,6 +19,10 @@ const ipfilter = require('express-ipfilter').IpFilter;
 const winston = require('winston');
 
 const app = express();
+
+// ============ FIX TRUST PROXY UNTUK RAILWAY ============
+app.set('trust proxy', 1);
+
 const PORT = process.env.PORT || 3000;
 
 // ============ LOGGER SETUP ============
@@ -45,10 +49,12 @@ const STORES_FILE = path.join(DATA_DIR, 'stores.json');
 const BLOCKED_FILE = path.join(DATA_DIR, 'blocked.json');
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 
+// Ensure directories exist
 [DATA_DIR, UPLOADS_DIR].forEach(dir => {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 });
 
+// Initialize JSON files
 [USERS_FILE, PRODUCTS_FILE, STORES_FILE, BLOCKED_FILE].forEach(file => {
   if (!fs.existsSync(file)) fs.writeFileSync(file, JSON.stringify([]));
 });
@@ -77,22 +83,34 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
+// Rate Limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: { error: 'Terlalu banyak request, coba lagi 15 menit lagi' }
+  windowMs: 15 * 60 * 1000, // 15 menit
+  max: 100, // max 100 request per IP
+  message: { error: 'Terlalu banyak request, coba lagi 15 menit lagi' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    return req.ip || req.connection.remoteAddress;
+  }
 });
 
 const authLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000,
-  max: 5,
-  message: { error: 'Terlalu banyak percobaan login, coba 1 jam lagi' }
+  windowMs: 60 * 60 * 1000, // 1 jam
+  max: 5, // max 5 percobaan login
+  message: { error: 'Terlalu banyak percobaan login, coba 1 jam lagi' },
+  keyGenerator: (req) => {
+    return req.ip || req.connection.remoteAddress;
+  }
 });
 
 const speedLimiter = slowDown({
   windowMs: 15 * 60 * 1000,
   delayAfter: 50,
-  delayMs: 500
+  delayMs: 500,
+  keyGenerator: (req) => {
+    return req.ip || req.connection.remoteAddress;
+  }
 });
 
 app.use(xss());
@@ -108,11 +126,15 @@ const suspiciousPaths = [
 
 app.use((req, res, next) => {
   if (suspiciousPaths.includes(req.path)) {
-    const blocked = JSON.parse(fs.readFileSync(BLOCKED_FILE) || '[]');
-    blocked.push({ ip: req.ip, path: req.path, timestamp: Date.now() });
-    fs.writeFileSync(BLOCKED_FILE, JSON.stringify(blocked));
-    
-    logger.warn({ ip: req.ip, path: req.path, action: 'SUSPICIOUS_PATH' });
+    try {
+      const blocked = JSON.parse(fs.readFileSync(BLOCKED_FILE) || '[]');
+      blocked.push({ ip: req.ip, path: req.path, timestamp: Date.now() });
+      fs.writeFileSync(BLOCKED_FILE, JSON.stringify(blocked));
+      
+      logger.warn({ ip: req.ip, path: req.path, action: 'SUSPICIOUS_PATH' });
+    } catch (e) {
+      // Ignore file write errors
+    }
     return res.status(404).send('Not Found');
   }
   next();
@@ -223,75 +245,162 @@ app.use('/api/', (req, res, next) => {
 });
 
 // ============ BRUTE FORCE PROTECTION ============
-let failedLogins = {}, failedRegisters = {};
+let failedLogins = {};
+let failedRegisters = {};
 
+// Clean up old entries every hour
+setInterval(() => {
+  const oneHourAgo = Date.now() - 3600000;
+  for (let ip in failedLogins) {
+    if (failedLogins[ip].lastAttempt < oneHourAgo) {
+      delete failedLogins[ip];
+    }
+  }
+  for (let ip in failedRegisters) {
+    if (failedRegisters[ip].lastAttempt < oneHourAgo) {
+      delete failedRegisters[ip];
+    }
+  }
+}, 3600000);
+
+// ============ API ROUTES ============
+
+// Register
 app.post('/api/register', async (req, res) => {
   const ip = req.ip;
-  if (!failedRegisters[ip]) failedRegisters[ip] = { count: 0, lastAttempt: Date.now() };
   
-  if (Date.now() - failedRegisters[ip].lastAttempt > 3600000) failedRegisters[ip].count = 0;
+  // Initialize failedRegisters for this IP if not exists
+  if (!failedRegisters[ip]) {
+    failedRegisters[ip] = { count: 0, lastAttempt: Date.now() };
+  }
+  
+  // Reset count if last attempt was more than 1 hour ago
+  if (Date.now() - failedRegisters[ip].lastAttempt > 3600000) {
+    failedRegisters[ip].count = 0;
+  }
+  
+  // Check if too many attempts
   if (failedRegisters[ip].count >= 3) {
     return res.status(429).json({ error: 'Terlalu banyak percobaan register. Coba 1 jam lagi.' });
   }
   
   try {
     const { name, email, password, phone } = req.body;
-    if (!name || !email || !password) return res.status(400).json({ error: 'Semua field harus diisi' });
-    if (password.length < 6) return res.status(400).json({ error: 'Password minimal 6 karakter' });
     
-    const users = JSON.parse(fs.readFileSync(USERS_FILE));
+    // Validate input
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Semua field harus diisi' });
+    }
+    
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password minimal 6 karakter' });
+    }
+    
+    // Read users file
+    let users = [];
+    try {
+      users = JSON.parse(fs.readFileSync(USERS_FILE));
+    } catch (e) {
+      users = [];
+    }
+    
+    // Check if email already exists
     if (users.find(u => u.email === email)) {
       failedRegisters[ip].count++;
       failedRegisters[ip].lastAttempt = Date.now();
       return res.status(400).json({ error: 'Email sudah terdaftar' });
     }
     
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Create new user
     const newUser = {
       id: crypto.randomBytes(16).toString('hex'),
-      name, email, password: hashedPassword, phone: phone || '',
-      role: 'user', balance: 0, store: null,
-      createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
+      name,
+      email,
+      password: hashedPassword,
+      phone: phone || '',
+      role: 'user',
+      balance: 0,
+      store: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
     
     users.push(newUser);
     fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+    
+    // Reset counter on success
     failedRegisters[ip].count = 0;
     
+    // Auto login after register
     req.login(newUser, (err) => {
-      if (err) return res.status(500).json({ error: 'Login gagal' });
+      if (err) {
+        logger.error({ action: 'AUTO_LOGIN_ERROR', error: err.message });
+        return res.status(500).json({ error: 'Registrasi berhasil tapi gagal login otomatis' });
+      }
+      
       const { password, ...userWithoutPassword } = newUser;
+      logger.info({ ip, userId: newUser.id, action: 'REGISTER_SUCCESS' });
       res.json({ success: true, user: userWithoutPassword });
     });
+    
   } catch (error) {
-    logger.error({ action: 'REGISTER_ERROR', error: error.message });
-    res.status(500).json({ error: 'Gagal register' });
+    logger.error({ action: 'REGISTER_ERROR', error: error.message, stack: error.stack });
+    res.status(500).json({ error: 'Gagal register: ' + error.message });
   }
 });
 
+// Login
 app.post('/api/login', (req, res, next) => {
   const ip = req.ip;
-  if (!failedLogins[ip]) failedLogins[ip] = { count: 0, lastAttempt: Date.now() };
   
-  if (Date.now() - failedLogins[ip].lastAttempt > 3600000) failedLogins[ip].count = 0;
+  // Initialize failedLogins for this IP if not exists
+  if (!failedLogins[ip]) {
+    failedLogins[ip] = { count: 0, lastAttempt: Date.now() };
+  }
+  
+  // Reset count if last attempt was more than 1 hour ago
+  if (Date.now() - failedLogins[ip].lastAttempt > 3600000) {
+    failedLogins[ip].count = 0;
+  }
+  
+  // Check if too many attempts
   if (failedLogins[ip].count >= 5) {
-    return res.status(429).json({ error: 'Terlalu banyak percobaan. Coba 1 jam lagi.' });
+    return res.status(429).json({ error: 'Terlalu banyak percobaan login. Coba 1 jam lagi.' });
   }
   
   passport.authenticate('local', (err, user, info) => {
-    if (err) return next(err);
+    if (err) {
+      logger.error({ ip, action: 'LOGIN_ERROR', error: err.message });
+      return next(err);
+    }
+    
     if (!user) {
       failedLogins[ip].count++;
       failedLogins[ip].lastAttempt = Date.now();
+      
       logger.warn({ ip, action: 'FAILED_LOGIN', attempt: failedLogins[ip].count });
-      return res.status(401).json({ error: 'Email atau password salah' });
+      return res.status(401).json({ error: info?.message || 'Email atau password salah' });
     }
     
+    // Regenerate session for security
     req.session.regenerate((err) => {
-      if (err) return next(err);
+      if (err) {
+        logger.error({ ip, action: 'SESSION_REGENERATE_ERROR', error: err.message });
+        return next(err);
+      }
+      
       req.login(user, (err) => {
-        if (err) return next(err);
+        if (err) {
+          logger.error({ ip, action: 'LOGIN_AFTER_REGENERATE_ERROR', error: err.message });
+          return next(err);
+        }
+        
+        // Reset counter on success
         failedLogins[ip].count = 0;
+        
         logger.info({ ip, userId: user.id, action: 'LOGIN_SUCCESS' });
         return res.json({ success: true, user });
       });
@@ -299,55 +408,101 @@ app.post('/api/login', (req, res, next) => {
   })(req, res, next);
 });
 
+// Logout
 app.post('/api/logout', (req, res) => {
   req.logout((err) => {
-    if (err) return res.status(500).json({ error: 'Gagal logout' });
+    if (err) {
+      logger.error({ action: 'LOGOUT_ERROR', error: err.message });
+      return res.status(500).json({ error: 'Gagal logout' });
+    }
+    
     req.session.destroy((err) => {
-      if (err) return res.status(500).json({ error: 'Gagal destroy session' });
+      if (err) {
+        logger.error({ action: 'SESSION_DESTROY_ERROR', error: err.message });
+        return res.status(500).json({ error: 'Gagal destroy session' });
+      }
+      
       res.clearCookie('ricc.sid');
+      logger.info({ ip: req.ip, action: 'LOGOUT_SUCCESS' });
       res.json({ success: true });
     });
   });
 });
 
+// Get current user
 app.get('/api/me', (req, res) => {
   res.json({ user: req.user || null });
 });
 
-// ============ STORE & PRODUCT ROUTES ============
+// Debug endpoint (temporary, remove in production)
+app.get('/api/debug/users', (req, res) => {
+  try {
+    const users = JSON.parse(fs.readFileSync(USERS_FILE));
+    res.json({ 
+      count: users.length, 
+      users: users.map(u => ({ 
+        id: u.id, 
+        name: u.name, 
+        email: u.email,
+        hasStore: !!u.store
+      }))
+    });
+  } catch (e) {
+    res.json({ error: e.message });
+  }
+});
+
+// Create store
 app.post('/api/create-store', isAuthenticated, async (req, res) => {
   try {
     const { storeName, storeDescription } = req.body;
-    if (!storeName) return res.status(400).json({ error: 'Nama toko harus diisi' });
+    if (!storeName) {
+      return res.status(400).json({ error: 'Nama toko harus diisi' });
+    }
     
+    // Read users
     const users = JSON.parse(fs.readFileSync(USERS_FILE));
     const userIndex = users.findIndex(u => u.id === req.user.id);
-    if (users[userIndex].store) return res.status(400).json({ error: 'Anda sudah punya toko' });
     
+    if (users[userIndex].store) {
+      return res.status(400).json({ error: 'Anda sudah punya toko' });
+    }
+    
+    // Read stores
     const stores = JSON.parse(fs.readFileSync(STORES_FILE));
-    if (stores.find(s => s.name === storeName)) return res.status(400).json({ error: 'Nama toko sudah digunakan' });
+    if (stores.find(s => s.name.toLowerCase() === storeName.toLowerCase())) {
+      return res.status(400).json({ error: 'Nama toko sudah digunakan' });
+    }
     
+    // Create new store
     const newStore = {
       id: crypto.randomBytes(16).toString('hex'),
-      ownerId: req.user.id, name: storeName, description: storeDescription || '',
-      products: [], balance: 0,
-      createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
+      ownerId: req.user.id,
+      name: storeName,
+      description: storeDescription || '',
+      products: [],
+      balance: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
     
     stores.push(newStore);
     fs.writeFileSync(STORES_FILE, JSON.stringify(stores, null, 2));
     
+    // Update user with store id
     users[userIndex].store = newStore.id;
     fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
     
     logger.info({ userId: req.user.id, storeId: newStore.id, action: 'STORE_CREATED' });
     res.json({ success: true, store: newStore });
+    
   } catch (error) {
     logger.error({ action: 'CREATE_STORE_ERROR', error: error.message });
     res.status(500).json({ error: 'Gagal buat toko' });
   }
 });
 
+// Get my store
 app.get('/api/my-store', isAuthenticated, (req, res) => {
   try {
     const stores = JSON.parse(fs.readFileSync(STORES_FILE));
@@ -360,13 +515,17 @@ app.get('/api/my-store', isAuthenticated, (req, res) => {
 
 // ============ FILE UPLOAD ============
 const blockedExtensions = ['.php', '.phtml', '.php3', '.php4', '.php5', '.phps', '.cgi', '.pl', '.py', '.asp', '.aspx', '.exe', '.bat', '.sh', '.cmd'];
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const userDir = path.join(UPLOADS_DIR, req.user.id);
-    if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true });
+    if (!fs.existsSync(userDir)) {
+      fs.mkdirSync(userDir, { recursive: true });
+    }
     cb(null, userDir);
   },
   filename: (req, file, cb) => {
+    // Sanitize filename
     const safeName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
     const uniqueSuffix = crypto.randomBytes(16).toString('hex');
     cb(null, uniqueSuffix + '_' + safeName);
@@ -376,56 +535,96 @@ const storage = multer.diskStorage({
 const fileFilter = (req, file, cb) => {
   const ext = path.extname(file.originalname).toLowerCase();
   if (blockedExtensions.includes(ext)) {
-    logger.warn({ ip: req.ip, user: req.user.id, file: file.originalname });
+    logger.warn({ ip: req.ip, user: req.user?.id, file: file.originalname, action: 'BLOCKED_EXTENSION' });
     return cb(new Error('Ekstensi file tidak diizinkan'), false);
   }
   cb(null, true);
 };
 
 const upload = multer({ 
-  storage, limits: { fileSize: 100 * 1024 * 1024, files: 10 }, fileFilter 
+  storage, 
+  limits: { 
+    fileSize: 100 * 1024 * 1024, // 100MB
+    files: 10 
+  }, 
+  fileFilter 
 }).array('files', 10);
 
+// Upload product
 app.post('/api/products', isAuthenticated, (req, res) => {
   upload(req, res, async (err) => {
-    if (err) return res.status(400).json({ error: 'Upload gagal: ' + err.message });
+    if (err) {
+      logger.warn({ userId: req.user?.id, action: 'UPLOAD_ERROR', error: err.message });
+      return res.status(400).json({ error: 'Upload gagal: ' + err.message });
+    }
     
     try {
       const { title, description, price, category, tags } = req.body;
-      if (!title || !description || !price) return res.status(400).json({ error: 'Data tidak lengkap' });
       
+      if (!title || !description || !price) {
+        return res.status(400).json({ error: 'Data produk tidak lengkap' });
+      }
+      
+      // Check if user has store
       const users = JSON.parse(fs.readFileSync(USERS_FILE));
       const user = users.find(u => u.id === req.user.id);
-      if (!user.store) return res.status(400).json({ error: 'Buat toko dulu' });
+      if (!user.store) {
+        return res.status(400).json({ error: 'Anda harus buat toko dulu' });
+      }
       
+      // Get store
       const stores = JSON.parse(fs.readFileSync(STORES_FILE));
       const store = stores.find(s => s.id === user.store);
+      if (!store) {
+        return res.status(400).json({ error: 'Toko tidak ditemukan' });
+      }
+      
+      // Read products
       const products = JSON.parse(fs.readFileSync(PRODUCTS_FILE));
       
+      // Create new product
       const newProduct = {
         id: crypto.randomBytes(16).toString('hex'),
-        title, description, price: parseFloat(price), category: category || 'other',
+        title,
+        description,
+        price: parseFloat(price),
+        category: category || 'other',
         tags: tags ? tags.split(',').map(t => t.trim()) : [],
-        sellerId: req.user.id, storeId: user.store, storeName: store.name,
+        sellerId: req.user.id,
+        storeId: user.store,
+        storeName: store.name,
         files: req.files ? req.files.map(f => ({
-          filename: f.filename, originalName: f.originalname,
-          size: f.size, mimetype: f.mimetype, path: f.path
+          filename: f.filename,
+          originalName: f.originalname,
+          size: f.size,
+          mimetype: f.mimetype,
+          path: f.path
         })) : [],
-        views: 0, sales: 0,
-        createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
+        views: 0,
+        sales: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       };
       
       products.push(newProduct);
       fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(products, null, 2));
       
+      // Update store with product id
       store.products.push(newProduct.id);
       fs.writeFileSync(STORES_FILE, JSON.stringify(stores, null, 2));
       
-      logger.info({ userId: req.user.id, productId: newProduct.id, action: 'PRODUCT_UPLOADED' });
+      logger.info({ 
+        userId: req.user.id, 
+        storeId: user.store, 
+        productId: newProduct.id, 
+        action: 'PRODUCT_UPLOADED' 
+      });
+      
       res.json({ success: true, product: newProduct });
+      
     } catch (error) {
-      logger.error({ action: 'UPLOAD_ERROR', error: error.message });
-      res.status(500).json({ error: 'Gagal upload' });
+      logger.error({ action: 'UPLOAD_PRODUCT_ERROR', error: error.message });
+      res.status(500).json({ error: 'Gagal upload produk' });
     }
   });
 });
@@ -443,7 +642,8 @@ app.get('/api/products', (req, res) => {
 app.get('/api/products/store/:storeId', (req, res) => {
   try {
     const products = JSON.parse(fs.readFileSync(PRODUCTS_FILE));
-    res.json(products.filter(p => p.storeId === req.params.storeId));
+    const storeProducts = products.filter(p => p.storeId === req.params.storeId);
+    res.json(storeProducts);
   } catch (error) {
     res.status(500).json({ error: 'Gagal load products' });
   }
@@ -453,10 +653,15 @@ app.get('/api/products/:id', (req, res) => {
   try {
     const products = JSON.parse(fs.readFileSync(PRODUCTS_FILE));
     const product = products.find(p => p.id === req.params.id);
-    if (!product) return res.status(404).json({ error: 'Produk tidak ditemukan' });
     
+    if (!product) {
+      return res.status(404).json({ error: 'Produk tidak ditemukan' });
+    }
+    
+    // Increment views
     product.views = (product.views || 0) + 1;
     fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(products, null, 2));
+    
     res.json(product);
   } catch (error) {
     res.status(500).json({ error: 'Gagal load product' });
@@ -488,14 +693,18 @@ app.put('/api/products/:productId', isAuthenticated, isProductOwner, async (req,
 
 app.delete('/api/products/:productId', isAuthenticated, isProductOwner, async (req, res) => {
   try {
+    // Read products
     let products = JSON.parse(fs.readFileSync(PRODUCTS_FILE));
     products = products.filter(p => p.id !== req.params.productId);
     fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(products, null, 2));
     
+    // Update store
     const stores = JSON.parse(fs.readFileSync(STORES_FILE));
     const storeIndex = stores.findIndex(s => s.id === req.product.storeId);
-    stores[storeIndex].products = stores[storeIndex].products.filter(id => id !== req.params.productId);
-    fs.writeFileSync(STORES_FILE, JSON.stringify(stores, null, 2));
+    if (storeIndex !== -1) {
+      stores[storeIndex].products = stores[storeIndex].products.filter(id => id !== req.params.productId);
+      fs.writeFileSync(STORES_FILE, JSON.stringify(stores, null, 2));
+    }
     
     logger.info({ userId: req.user.id, productId: req.params.productId, action: 'PRODUCT_DELETED' });
     res.json({ success: true });
@@ -510,7 +719,10 @@ app.post('/api/create-manual-payment', (req, res) => {
     const { productId } = req.body;
     const products = JSON.parse(fs.readFileSync(PRODUCTS_FILE));
     const product = products.find(p => p.id === productId);
-    if (!product) return res.status(404).json({ error: 'Produk tidak ditemukan' });
+    
+    if (!product) {
+      return res.status(404).json({ error: 'Produk tidak ditemukan' });
+    }
     
     res.json({
       success: true,
@@ -524,7 +736,8 @@ app.post('/api/create-manual-payment', (req, res) => {
         ewallet: [
           { name: 'GoPay', number: process.env.GOPAY_NUMBER || '+6281543343778' },
           { name: 'DANA', number: process.env.GOPAY_NUMBER || '+6281543343778' }
-        ]
+        ],
+        instructions: 'Transfer sesuai total, kirim bukti ke Telegram/Email'
       }
     });
   } catch (error) {
@@ -534,15 +747,26 @@ app.post('/api/create-manual-payment', (req, res) => {
 
 // ============ HEALTH CHECK ============
 app.get('/health', (req, res) => {
-  res.json({ status: 'OK', time: new Date().toISOString(), uptime: process.uptime() });
+  res.json({ 
+    status: 'OK', 
+    time: new Date().toISOString(), 
+    uptime: process.uptime(),
+    ip: req.ip
+  });
 });
 
 // ============ ERROR HANDLER ============
 app.use((err, req, res, next) => {
-  logger.error({ ip: req.ip, url: req.url, error: err.message });
+  logger.error({ 
+    ip: req.ip, 
+    url: req.url, 
+    error: err.message, 
+    stack: err.stack 
+  });
   res.status(500).json({ error: 'Terjadi kesalahan internal' });
 });
 
+// ============ 404 HANDLER ============
 app.use((req, res) => {
   res.status(404).json({ error: 'Endpoint tidak ditemukan' });
 });
@@ -550,5 +774,7 @@ app.use((req, res) => {
 // ============ START SERVER ============
 app.listen(PORT, () => {
   console.log(`Ricc Marketing Place running on http://localhost:${PORT}`);
+  console.log(`Server started at: ${new Date().toLocaleString()}`);
   console.log(`Security: Helmet, RateLimit, XSS, HPP, IPFilter, Validation, BruteForce`);
+  console.log(`Trust proxy: ENABLED (fix for Railway)`);
 });
