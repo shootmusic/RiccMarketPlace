@@ -255,7 +255,7 @@ Pull requests dipersilahkan! Untuk perubahan besar, buka issue dulu ya.
 
 <div align="center">
 
-![Profile Views](https://komarev.com/ghpvc/?username=shootmusic&label=Profile%20Views&color=0066ff&style=flat-square)
+[![Profile Views](https://komarev.com/ghpvc/?username=shootmusic&label=Profile%20Views&color=0066ff&style=flat-square)](https://github.com/shootmusic)
 
 </div>
 
