@@ -278,3 +278,19 @@ Made with 🔥 by RICC
   <img src="https://raw.githubusercontent.com/trinib/trinib/82213791fa9ff58d3ca768ddd6de2489ec23ffca/images/footer.svg" width="100%">
 
 </div>
+
+---
+
+<div align="center">
+  
+  ### ⭐ Star repo ini kalo bermanfaat! ⭐
+  
+  <img src="https://raw.githubusercontent.com/trinib/trinib/a5f17399d3b02898fcb891ebbb41fe476f37b535/images/marquee.svg" width="100%">
+  
+  <img src="https://raw.githubusercontent.com/shootmusic/RiccMarketPlace/main/IMG_20260120_174751.jpg" width="120" height="120" style="border-radius: 50%; border: 3px solid #0066ff; box-shadow: 0 0 20px #0066ff;">
+  
+  **Made with 🔥 by RICC**
+  
+  <img src="https://raw.githubusercontent.com/trinib/trinib/82213791fa9ff58d3ca768ddd6de2489ec23ffca/images/footer.svg" width="100%">
+  
+</div>
