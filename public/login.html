@@ -149,6 +149,26 @@
         .back-home a:hover {
             color: white;
         }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 10px;
+            display: none;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .login-btn.loading .loading {
+            display: inline-block;
+        }
     </style>
 </head>
 <body>
@@ -171,7 +191,10 @@
                 <input type="password" id="password" placeholder="Masukkan password" required>
             </div>
             
-            <button type="submit" class="login-btn">Login</button>
+            <button type="submit" class="login-btn" id="loginBtn">
+                <span>Login</span>
+                <span class="loading"></span>
+            </button>
         </form>
         
         <div class="register-link">
@@ -190,10 +213,17 @@
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const errorDiv = document.getElementById('errorMessage');
+            const loginBtn = document.getElementById('loginBtn');
             
+            // Tampilkan loading
             errorDiv.classList.remove('show');
+            loginBtn.disabled = true;
+            loginBtn.classList.add('loading');
+            loginBtn.querySelector('span').textContent = 'Login...';
             
             try {
+                console.log('Mencoba login dengan:', email);
+                
                 const response = await fetch('/api/login', {
                     method: 'POST',
                     headers: {
@@ -203,17 +233,46 @@
                 });
                 
                 const data = await response.json();
+                console.log('Response dari server:', data);
                 
                 if (data.success) {
-                    // Redirect ke dashboard setelah login sukses
+                    console.log('Login sukses, redirect ke dashboard...');
                     window.location.href = '/dashboard.html';
                 } else {
-                    errorDiv.textContent = data.message || 'Email atau password salah';
+                    errorDiv.textContent = data.error || 'Email atau password salah';
                     errorDiv.classList.add('show');
+                    
+                    // Reset button
+                    loginBtn.disabled = false;
+                    loginBtn.classList.remove('loading');
+                    loginBtn.querySelector('span').textContent = 'Login';
                 }
             } catch (error) {
-                errorDiv.textContent = 'Terjadi kesalahan. Coba lagi nanti.';
+                console.error('Error detail:', error);
+                errorDiv.textContent = 'Terjadi kesalahan. Cek koneksi atau console browser.';
                 errorDiv.classList.add('show');
+                
+                // Reset button
+                loginBtn.disabled = false;
+                loginBtn.classList.remove('loading');
+                loginBtn.querySelector('span').textContent = 'Login';
+            }
+        });
+        
+        // Test koneksi ke API
+        window.addEventListener('load', async () => {
+            try {
+                const test = await fetch('/api/me');
+                const data = await test.json();
+                console.log('API /me response:', data);
+                
+                // Kalo udah login, redirect langsung
+                if (data.user) {
+                    console.log('Udah login, redirect ke dashboard...');
+                    window.location.href = '/dashboard.html';
+                }
+            } catch (e) {
+                console.error('Gagal konek ke API:', e);
             }
         });
     </script>
