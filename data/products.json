@@ -1,0 +1,128 @@
+[
+  {
+    "id": "yt-auto-subscribe-v1",
+    "title": "YouTube Auto Subscribe Bot",
+    "description": "Bot otomatis untuk subscribe YouTube +100 subscriber/hari. Support GitHub Actions, Selenium, undetected-chromedriver. Auto create akun Google dan subscribe.",
+    "price": 0.25,
+    "category": "code",
+    "tags": ["youtube", "bot", "automation", "python", "selenium"],
+    "seller": "0xRICC",
+    "files": [
+      {
+        "filename": "yt-auto-subscribe.zip",
+        "originalName": "YouTube-Auto-Subscribe.zip",
+        "size": 2457600,
+        "mimetype": "application/zip"
+      }
+    ],
+    "views": 156,
+    "sales": 12,
+    "createdAt": "2026-02-23T06:00:00.000Z",
+    "updatedAt": "2026-02-23T06:00:00.000Z"
+  },
+  {
+    "id": "yt-auto-upload-v1",
+    "title": "YouTube Auto Upload Bot",
+    "description": "Upload video otomatis ke YouTube 2x sehari. Support Google Drive download, video cutting, AI analysis with Gemini 2.5 Pro, tracking progress 112 segmen.",
+    "price": 0.35,
+    "category": "code",
+    "tags": ["youtube", "upload", "automation", "python", "gemini"],
+    "seller": "0xRICC",
+    "files": [
+      {
+        "filename": "yt-auto-upload.zip",
+        "originalName": "YouTube-Auto-Upload.zip",
+        "size": 3127800,
+        "mimetype": "application/zip"
+      }
+    ],
+    "views": 98,
+    "sales": 8,
+    "createdAt": "2026-02-23T06:30:00.000Z",
+    "updatedAt": "2026-02-23T06:30:00.000Z"
+  },
+  {
+    "id": "tiktok-auto-v1",
+    "title": "TikTok Automation Suite",
+    "description": "Complete TikTok automation tools: auto upload, auto like, auto comment, auto follow. Undetectable, proxy support, multi-account management.",
+    "price": 0.45,
+    "category": "code",
+    "tags": ["tiktok", "automation", "python", "selenium"],
+    "seller": "0xRICC",
+    "files": [
+      {
+        "filename": "tiktok-automation.zip",
+        "originalName": "TikTok-Automation.zip",
+        "size": 4215600,
+        "mimetype": "application/zip"
+      }
+    ],
+    "views": 210,
+    "sales": 18,
+    "createdAt": "2026-02-19T10:00:00.000Z",
+    "updatedAt": "2026-02-19T10:00:00.000Z"
+  },
+  {
+    "id": "ricc-pdf-v1",
+    "title": "RiccPDF - PDF Processing Library",
+    "description": "Library JavaScript untuk processing PDF: merge, split, rotate, watermark, extract text, generate PDF from HTML. Works in browser & Node.js.",
+    "price": 0.15,
+    "category": "code",
+    "tags": ["pdf", "javascript", "library", "processing"],
+    "seller": "0xRICC",
+    "files": [
+      {
+        "filename": "ricc-pdf.zip",
+        "originalName": "RiccPDF.zip",
+        "size": 892000,
+        "mimetype": "application/zip"
+      }
+    ],
+    "views": 45,
+    "sales": 5,
+    "createdAt": "2026-02-18T14:00:00.000Z",
+    "updatedAt": "2026-02-18T14:00:00.000Z"
+  },
+  {
+    "id": "ricc-scanner-v1",
+    "title": "RiccScanner - Network Security Tool",
+    "description": "Advanced network scanner for security professionals. Port scanning, service detection, vulnerability checking, exploit suggestions. Educational purposes.",
+    "price": 0.55,
+    "category": "tools",
+    "tags": ["security", "scanner", "network", "python"],
+    "seller": "0xRICC",
+    "files": [
+      {
+        "filename": "ricc-scanner.zip",
+        "originalName": "RiccScanner.zip",
+        "size": 5678300,
+        "mimetype": "application/zip"
+      }
+    ],
+    "views": 312,
+    "sales": 24,
+    "createdAt": "2026-02-17T09:00:00.000Z",
+    "updatedAt": "2026-02-17T09:00:00.000Z"
+  },
+  {
+    "id": "ricc-forensic-v1",
+    "title": "RiccForensic - Digital Forensic Toolkit",
+    "description": "Complete digital forensic toolkit for investigators. File recovery, metadata extraction, timeline analysis, hash matching, report generation.",
+    "price": 0.65,
+    "category": "tools",
+    "tags": ["forensic", "security", "investigation", "python"],
+    "seller": "0xRICC",
+    "files": [
+      {
+        "filename": "ricc-forensic.zip",
+        "originalName": "RiccForensic.zip",
+        "size": 7894500,
+        "mimetype": "application/zip"
+      }
+    ],
+    "views": 178,
+    "sales": 14,
+    "createdAt": "2026-02-15T11:00:00.000Z",
+    "updatedAt": "2026-02-15T11:00:00.000Z"
+  }
+]
