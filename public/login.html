@@ -1,32 +1,271 @@
 <!DOCTYPE html>
-<html>
-<head><title>Login</title><link rel="stylesheet" href="style.css"></head>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Ricc Market</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0a0f 0%, #111118 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: rgba(21, 21, 31, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid #222230;
+            border-radius: 24px;
+            padding: 48px;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .login-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #0066ff, #00ccff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 12px;
+        }
+
+        .login-header p {
+            color: #a0a0b0;
+            font-size: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #e0e0e0;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 16px 20px;
+            background: #0a0a0f;
+            border: 2px solid #222230;
+            border-radius: 16px;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            border-color: #0066ff;
+            box-shadow: 0 0 0 4px rgba(0,102,255,0.1);
+        }
+
+        .form-group input::placeholder {
+            color: #3a3a4a;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #0066ff, #00ccff);
+            border: none;
+            border-radius: 16px;
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 16px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,102,255,0.3);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .links {
+            text-align: center;
+            margin-top: 32px;
+        }
+
+        .links a {
+            color: #a0a0b0;
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: color 0.3s;
+            display: inline-block;
+            margin: 0 12px;
+        }
+
+        .links a:hover {
+            color: #0066ff;
+        }
+
+        .register-link {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #222230;
+            text-align: center;
+        }
+
+        .register-link a {
+            color: #0066ff;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            margin-left: 8px;
+        }
+
+        .register-link a:hover {
+            text-decoration: underline;
+        }
+
+        .back-home {
+            text-align: center;
+            margin-top: 24px;
+        }
+
+        .back-home a {
+            color: #666676;
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.3s;
+        }
+
+        .back-home a:hover {
+            color: #0066ff;
+        }
+
+        .error-message {
+            background: rgba(255, 51, 102, 0.1);
+            border: 1px solid #ff3366;
+            color: #ff3366;
+            padding: 14px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            font-size: 0.95rem;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 32px 20px;
+            }
+            
+            .login-header h1 {
+                font-size: 2rem;
+            }
+            
+            .form-group input {
+                padding: 14px 16px;
+            }
+            
+            .login-btn {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
 <body>
-    <div class="auth-container">
-        <h2>Login</h2>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>Ricc Market</h1>
+            <p>Masuk ke akun Anda</p>
+        </div>
+        
+        <div class="error-message" id="errorMessage"></div>
+        
         <form id="loginForm">
-            <input type="email" id="email" placeholder="Email" required>
-            <input type="password" id="password" placeholder="Password" required>
-            <button type="submit">Login</button>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="email" placeholder="contoh@email.com" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="password" placeholder="••••••••" required>
+            </div>
+            
+            <button type="submit" class="login-btn">Login</button>
         </form>
-        <p>Belum punya akun? <a href="/register.html">Daftar</a></p>
-        <p><a href="/">← Kembali ke Home</a></p>
+        
+        <div class="register-link">
+            <span style="color: #a0a0b0;">Belum punya akun?</span>
+            <a href="/register.html">Daftar</a>
+        </div>
+        
+        <div class="back-home">
+            <a href="/">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                Kembali ke Home
+            </a>
+        </div>
     </div>
+
     <script>
-        document.getElementById('loginForm').onsubmit = async (e) => {
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const res = await fetch('/api/login', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    email: document.getElementById('email').value,
-                    password: document.getElementById('password').value
-                })
-            });
-            const data = await res.json();
-            if (data.success) window.location.href = '/dashboard.html';
-            else alert(data.error || 'Login gagal');
-        };
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('errorMessage');
+            
+            errorDiv.classList.remove('show');
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    window.location.href = '/dashboard.html';
+                } else {
+                    errorDiv.textContent = data.error || 'Email atau password salah';
+                    errorDiv.classList.add('show');
+                }
+            } catch (error) {
+                errorDiv.textContent = 'Terjadi kesalahan. Coba lagi.';
+                errorDiv.classList.add('show');
+            }
+        });
     </script>
 </body>
 </html>
