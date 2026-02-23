@@ -18,14 +18,13 @@
                 <a href="#home" class="active">Home</a>
                 <a href="#products">Products</a>
                 <a href="#upload">Upload</a>
-                <a href="#dashboard">Dashboard</a>
             </div>
             <div class="nav-actions">
-                <a href="login.html" class="wallet-btn" style="text-decoration: none;">
+                <a href="login.html" class="wallet-btn">
                     <i class="fas fa-user"></i>
                     <span>Login</span>
                 </a>
-                <a href="register.html" class="wallet-btn" style="text-decoration: none; background: transparent; border: 2px solid #0066ff;">
+                <a href="register.html" class="wallet-btn outline">
                     <i class="fas fa-user-plus"></i>
                     <span>Daftar</span>
                 </a>
@@ -33,9 +32,116 @@
         </div>
     </nav>
 
-    <!-- Rest of your existing index.html content -->
-    <!-- ... -->
-    
+    <main>
+        <section id="home" class="hero-section">
+            <div class="hero-content">
+                <h1 class="glitch-text">Digital Product Marketplace</h1>
+                <p class="hero-subtitle">Jual & Beli Produk Digital • Support Semua Format File • Web3 Ready</p>
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <span class="stat-value" id="totalProducts">0</span>
+                        <span class="stat-label">Products</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="totalSellers">0</span>
+                        <span class="stat-label">Sellers</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="totalSales">0</span>
+                        <span class="stat-label">Sales</span>
+                    </div>
+                </div>
+                <div class="hero-actions">
+                    <a href="#products" class="primary-btn">
+                        Explore Products <i class="fas fa-arrow-right"></i>
+                    </a>
+                    <a href="register.html" class="secondary-btn">
+                        Mulai Jualan <i class="fas fa-store"></i>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section id="products" class="products-section">
+            <div class="section-header">
+                <h2>Digital Products</h2>
+                <div class="filter-bar">
+                    <select id="categoryFilter">
+                        <option value="all">All Categories</option>
+                        <option value="code">Source Code</option>
+                        <option value="pdf">PDF/Ebooks</option>
+                        <option value="assets">Design Assets</option>
+                        <option value="tools">Tools</option>
+                    </select>
+                    <select id="sortFilter">
+                        <option value="newest">Newest</option>
+                        <option value="price-low">Price: Low to High</option>
+                        <option value="price-high">Price: High to Low</option>
+                    </select>
+                    <input type="text" id="productSearch" placeholder="Search products...">
+                </div>
+            </div>
+            <div class="products-grid" id="productsGrid"></div>
+            <div class="load-more">
+                <button id="loadMoreBtn" class="load-more-btn">Load More</button>
+            </div>
+        </section>
+
+        <section id="upload" class="upload-section">
+            <div class="section-header">
+                <h2>Upload Product</h2>
+                <p>Supported formats: PDF, Word, TXT, HTML, PY, ZIP, MP3, MP4, JPG, PNG, and more</p>
+            </div>
+            
+            <div class="upload-container">
+                <div class="upload-area" id="uploadArea">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <h3>Drag & Drop files here</h3>
+                    <p>or</p>
+                    <button class="browse-btn" id="browseBtn">Browse Files</button>
+                    <input type="file" id="fileInput" multiple style="display: none;">
+                    <p class="file-limit">Max file size: 100MB per file</p>
+                </div>
+                
+                <div class="upload-form" id="uploadForm" style="display: none;">
+                    <h3>Product Details</h3>
+                    <div class="form-group">
+                        <label>Product Title</label>
+                        <input type="text" id="productTitle" placeholder="e.g., Complete Python Course">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="productDesc" rows="4" placeholder="Describe your product..."></textarea>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Price (Rp)</label>
+                            <input type="number" id="productPrice" step="1000" placeholder="50000">
+                        </div>
+                        <div class="form-group">
+                            <label>Category</label>
+                            <select id="productCategory">
+                                <option value="code">Source Code</option>
+                                <option value="pdf">PDF/Ebook</option>
+                                <option value="assets">Design Assets</option>
+                                <option value="tools">Tools</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="file-list" id="fileList"></div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="cancel-btn" id="cancelUpload">Cancel</button>
+                        <button type="button" class="submit-btn" id="submitUpload">Upload Product</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
     <footer>
         <div class="footer-content">
             <div class="footer-section">
@@ -47,13 +153,197 @@
                     <a href="mailto:shootmusic05@gmail.com"><i class="fas fa-envelope"></i></a>
                 </div>
             </div>
-            <!-- Rest of footer -->
+            <div class="footer-section">
+                <h4>Products</h4>
+                <a href="https://github.com/shootmusic/YouTube-Auto-Subscribe" target="_blank">YouTube Auto Subscribe</a>
+                <a href="https://github.com/shootmusic/YouTube-Auto-Upload" target="_blank">YouTube Auto Upload</a>
+                <a href="https://github.com/shootmusic/Tikok-Automation" target="_blank">TikTok Automation</a>
+            </div>
+            <div class="footer-section">
+                <h4>Support</h4>
+                <a href="#">Documentation</a>
+                <a href="#">API</a>
+                <a href="#">Contact</a>
+            </div>
         </div>
         <div class="footer-bottom">
             <p>&copy; 2026 Ricc Marketing Place. All rights reserved.</p>
         </div>
     </footer>
 
-    <script src="script.js"></script>
+    <script>
+        // Simple cursor effect
+        document.addEventListener('mousemove', (e) => {
+            const glow = document.getElementById('cursorGlow');
+            glow.style.left = e.clientX + 'px';
+            glow.style.top = e.clientY + 'px';
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+
+        // Check login status and update navbar
+        async function checkLoginStatus() {
+            try {
+                const response = await fetch('/api/me');
+                const data = await response.json();
+                
+                const navActions = document.querySelector('.nav-actions');
+                
+                if (data.user) {
+                    // User is logged in
+                    navActions.innerHTML = `
+                        <a href="dashboard.html" class="wallet-btn">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    `;
+                }
+            } catch (error) {
+                console.error('Check login failed:', error);
+            }
+        }
+
+        // Load products
+        async function loadProducts() {
+            try {
+                const response = await fetch('/api/products');
+                const products = await response.json();
+                
+                const grid = document.getElementById('productsGrid');
+                const totalProducts = document.getElementById('totalProducts');
+                
+                if (totalProducts) {
+                    totalProducts.textContent = products.length;
+                }
+                
+                if (products.length === 0) {
+                    grid.innerHTML = '<p style="text-align: center; color: #a0a0b0; grid-column: 1/-1;">Belum ada produk. Jadi penjual pertama!</p>';
+                    return;
+                }
+                
+                grid.innerHTML = products.slice(0, 6).map(product => `
+                    <div class="product-card">
+                        <div class="product-image">
+                            <span class="product-badge">${product.category}</span>
+                        </div>
+                        <div class="product-info">
+                            <div class="product-category">${product.storeName || 'Ricc Store'}</div>
+                            <h3 class="product-title">${product.title}</h3>
+                            <p class="product-desc">${product.description.substring(0, 80)}...</p>
+                            <div class="product-meta">
+                                <span class="product-price">Rp ${(product.price * 1000000).toLocaleString('id-ID')}</span>
+                                <span class="product-sales">${product.sales || 0} sold</span>
+                            </div>
+                            <div class="product-footer">
+                                <button class="buy-btn" onclick="buyProduct('${product.id}')">Beli</button>
+                                <button class="preview-btn" onclick="previewProduct('${product.id}')">Detail</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Load products failed:', error);
+            }
+        }
+
+        // Buy product
+        window.buyProduct = async (productId) => {
+            // Cek login dulu
+            const response = await fetch('/api/me');
+            const data = await response.json();
+            
+            if (!data.user) {
+                window.location.href = '/login.html?redirect=dashboard';
+                return;
+            }
+            
+            // Dapatkan info produk
+            const products = await (await fetch('/api/products')).json();
+            const product = products.find(p => p.id === productId);
+            
+            // Tampilkan info pembayaran manual
+            alert(`
+                🛒 Produk: ${product.title}
+                💰 Harga: Rp ${(product.price * 1000000).toLocaleString('id-ID')}
+                
+                📲 Transfer ke:
+                GoPay: +6281543343778 (RICC)
+                BCA: 1234567890 a/n RICC
+                
+                📤 Kirim bukti ke Telegram: t.me/SukarnoHatta
+                Setelah konfirmasi, file akan dikirim.
+            `);
+        };
+
+        window.previewProduct = (productId) => {
+            alert('Fitur detail produk sedang dikembangkan');
+        };
+
+        // Upload functionality
+        document.getElementById('uploadArea').addEventListener('click', async () => {
+            // Cek login dulu
+            const response = await fetch('/api/me');
+            const data = await response.json();
+            
+            if (!data.user) {
+                window.location.href = '/login.html?redirect=upload';
+                return;
+            }
+            
+            document.getElementById('fileInput').click();
+        });
+
+        document.getElementById('fileInput').addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                document.getElementById('uploadForm').style.display = 'block';
+                const fileList = document.getElementById('fileList');
+                fileList.innerHTML = '';
+                
+                Array.from(e.target.files).forEach(file => {
+                    fileList.innerHTML += `
+                        <div class="file-item">
+                            <span class="file-name">${file.name}</span>
+                            <span class="file-size">${(file.size / 1024).toFixed(2)} KB</span>
+                        </div>
+                    `;
+                });
+            }
+        });
+
+        document.getElementById('cancelUpload').addEventListener('click', () => {
+            document.getElementById('uploadForm').style.display = 'none';
+            document.getElementById('fileInput').value = '';
+            document.getElementById('fileList').innerHTML = '';
+        });
+
+        document.getElementById('submitUpload').addEventListener('click', async () => {
+            alert('Upload produk hanya untuk seller dengan toko. Silakan buka dashboard untuk buat toko.');
+            window.location.href = '/dashboard.html';
+        });
+
+        document.getElementById('browseBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.getElementById('fileInput').click();
+        });
+
+        // Filter functionality (simplified)
+        document.getElementById('categoryFilter')?.addEventListener('change', loadProducts);
+        document.getElementById('sortFilter')?.addEventListener('change', loadProducts);
+        document.getElementById('productSearch')?.addEventListener('input', loadProducts);
+
+        // Initialize
+        checkLoginStatus();
+        loadProducts();
+    </script>
 </body>
 </html>
