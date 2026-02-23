@@ -17,6 +17,7 @@ const xss = require('xss-clean');
 const hpp = require('hpp');
 const ipfilter = require('express-ipfilter').IpFilter;
 const winston = require('winston');
+const SQLiteStore = require('connect-sqlite3')(session);
 
 const app = express();
 
@@ -83,34 +84,46 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
-// Rate Limiting
+// ============ RATE LIMITING FIX IPV4/IPV6 ============
+const getClientIp = (req) => {
+  let clientIp = req.ip;
+  
+  // Handle IPv6 localhost (::1) and IPv6-mapped IPv4 addresses
+  if (clientIp && clientIp.includes(':')) {
+    // If it's IPv6 localhost, return '127.0.0.1' for consistency
+    if (clientIp === '::1') {
+      return '127.0.0.1';
+    }
+    // If it's IPv6-mapped IPv4 (::ffff:192.168.1.1), extract the IPv4 part
+    if (clientIp.startsWith('::ffff:')) {
+      return clientIp.substring(7);
+    }
+  }
+  
+  return clientIp || req.connection.remoteAddress || '0.0.0.0';
+};
+
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 menit
   max: 100, // max 100 request per IP
   message: { error: 'Terlalu banyak request, coba lagi 15 menit lagi' },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => {
-    return req.ip || req.connection.remoteAddress;
-  }
+  keyGenerator: getClientIp
 });
 
 const authLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 jam
   max: 5, // max 5 percobaan login
   message: { error: 'Terlalu banyak percobaan login, coba 1 jam lagi' },
-  keyGenerator: (req) => {
-    return req.ip || req.connection.remoteAddress;
-  }
+  keyGenerator: getClientIp
 });
 
 const speedLimiter = slowDown({
   windowMs: 15 * 60 * 1000,
   delayAfter: 50,
   delayMs: 500,
-  keyGenerator: (req) => {
-    return req.ip || req.connection.remoteAddress;
-  }
+  keyGenerator: getClientIp
 });
 
 app.use(xss());
@@ -128,10 +141,10 @@ app.use((req, res, next) => {
   if (suspiciousPaths.includes(req.path)) {
     try {
       const blocked = JSON.parse(fs.readFileSync(BLOCKED_FILE) || '[]');
-      blocked.push({ ip: req.ip, path: req.path, timestamp: Date.now() });
+      blocked.push({ ip: getClientIp(req), path: req.path, timestamp: Date.now() });
       fs.writeFileSync(BLOCKED_FILE, JSON.stringify(blocked));
       
-      logger.warn({ ip: req.ip, path: req.path, action: 'SUSPICIOUS_PATH' });
+      logger.warn({ ip: getClientIp(req), path: req.path, action: 'SUSPICIOUS_PATH' });
     } catch (e) {
       // Ignore file write errors
     }
@@ -151,6 +164,11 @@ app.use(speedLimiter);
 
 // ============ SESSION ============
 app.use(session({
+  store: new SQLiteStore({ 
+    db: 'sessions.db', 
+    dir: DATA_DIR,
+    concurrentDB: true
+  }),
   secret: process.env.SESSION_SECRET || 'rahasia-default',
   resave: false,
   saveUninitialized: false,
@@ -236,7 +254,7 @@ app.use('/api/', (req, res, next) => {
   if (req.body) {
     for (let key in req.body) {
       if (!validateInput(req.body[key])) {
-        logger.warn({ ip: req.ip, action: 'INVALID_INPUT', field: key });
+        logger.warn({ ip: getClientIp(req), action: 'INVALID_INPUT', field: key });
         return res.status(400).json({ error: 'Input tidak valid' });
       }
     }
@@ -267,7 +285,7 @@ setInterval(() => {
 
 // Register
 app.post('/api/register', async (req, res) => {
-  const ip = req.ip;
+  const ip = getClientIp(req);
   
   // Initialize failedRegisters for this IP if not exists
   if (!failedRegisters[ip]) {
@@ -354,7 +372,7 @@ app.post('/api/register', async (req, res) => {
 
 // Login
 app.post('/api/login', (req, res, next) => {
-  const ip = req.ip;
+  const ip = getClientIp(req);
   
   // Initialize failedLogins for this IP if not exists
   if (!failedLogins[ip]) {
@@ -423,7 +441,7 @@ app.post('/api/logout', (req, res) => {
       }
       
       res.clearCookie('ricc.sid');
-      logger.info({ ip: req.ip, action: 'LOGOUT_SUCCESS' });
+      logger.info({ ip: getClientIp(req), action: 'LOGOUT_SUCCESS' });
       res.json({ success: true });
     });
   });
@@ -535,7 +553,7 @@ const storage = multer.diskStorage({
 const fileFilter = (req, file, cb) => {
   const ext = path.extname(file.originalname).toLowerCase();
   if (blockedExtensions.includes(ext)) {
-    logger.warn({ ip: req.ip, user: req.user?.id, file: file.originalname, action: 'BLOCKED_EXTENSION' });
+    logger.warn({ ip: getClientIp(req), user: req.user?.id, file: file.originalname, action: 'BLOCKED_EXTENSION' });
     return cb(new Error('Ekstensi file tidak diizinkan'), false);
   }
   cb(null, true);
@@ -751,14 +769,14 @@ app.get('/health', (req, res) => {
     status: 'OK', 
     time: new Date().toISOString(), 
     uptime: process.uptime(),
-    ip: req.ip
+    ip: getClientIp(req)
   });
 });
 
 // ============ ERROR HANDLER ============
 app.use((err, req, res, next) => {
   logger.error({ 
-    ip: req.ip, 
+    ip: getClientIp(req), 
     url: req.url, 
     error: err.message, 
     stack: err.stack 
@@ -777,4 +795,6 @@ app.listen(PORT, () => {
   console.log(`Server started at: ${new Date().toLocaleString()}`);
   console.log(`Security: Helmet, RateLimit, XSS, HPP, IPFilter, Validation, BruteForce`);
   console.log(`Trust proxy: ENABLED (fix for Railway)`);
+  console.log(`Session Store: SQLite (production ready)`);
+  console.log(`IP Handler: IPv4/IPv6 compatible`);
 });
