@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Ricc Marketing Place</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            background: #0a0a0f;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .navbar {
+            background: #15151f;
+            border-bottom: 1px solid #222230;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #0066ff, #00ccff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .nav-links a {
+            color: #a0a0b0;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .nav-links a:hover {
+            color: white;
+        }
+        
+        .logout-btn {
+            background: transparent;
+            border: 1px solid #ff3366;
+            color: #ff3366;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .logout-btn:hover {
+            background: #ff3366;
+            color: white;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        
+        .welcome-card {
+            background: #15151f;
+            border: 1px solid #222230;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .welcome-card h1 {
+            margin: 0 0 10px 0;
+            font-size: 2rem;
+        }
+        
+        .welcome-card h1 span {
+            color: #0066ff;
+        }
+        
+        .store-section {
+            background: #15151f;
+            border: 1px solid #222230;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .store-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .store-header h2 {
+            margin: 0;
+            color: white;
+        }
+        
+        .create-store-btn {
+            background: linear-gradient(135deg, #0066ff, #00ccff);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .store-form {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: #0a0a0f;
+            border-radius: 10px;
+        }
+        
+        .store-form.show {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            color: #a0a0b0;
+            margin-bottom: 5px;
+        }
+        
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            background: #15151f;
+            border: 1px solid #222230;
+            border-radius: 8px;
+            color: white;
+        }
+        
+        .submit-btn {
+            background: #0066ff;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        .store-info {
+            background: #0a0a0f;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+        
+        .store-info p {
+            margin: 5px 0;
+            color: #a0a0b0;
+        }
+        
+        .store-info strong {
+            color: white;
+        }
+        
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .product-card {
+            background: #0a0a0f;
+            border: 1px solid #222230;
+            border-radius: 10px;
+            padding: 15px;
+        }
+        
+        .product-card h4 {
+            margin: 0 0 10px 0;
+            color: white;
+        }
+        
+        .product-card p {
+            color: #a0a0b0;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        
+        .product-price {
+            color: #0066ff;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .product-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .edit-btn, .delete-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .edit-btn {
+            background: #0066ff;
+            color: white;
+        }
+        
+        .delete-btn {
+            background: #ff3366;
+            color: white;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #a0a0b0;
+            padding: 50px;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo">Ricc Market Place</div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="index.html#products">Products</a>
+            <button class="logout-btn" id="logoutBtn">Logout</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="welcome-card" id="welcomeCard">
+            <h1>Halo, <span id="userName">...</span>! 👋</h1>
+            <p id="userEmail"></p>
+        </div>
+        
+        <div class="store-section" id="storeSection">
+            <div class="store-header">
+                <h2>Toko Saya</h2>
+                <button class="create-store-btn" id="createStoreBtn">Buat Toko</button>
+            </div>
+            
+            <div class="store-form" id="storeForm">
+                <h3>Buat Toko Baru</h3>
+                <div class="form-group">
+                    <label>Nama Toko</label>
+                    <input type="text" id="storeName" required>
+                </div>
+                <div class="form-group">
+                    <label>Deskripsi Toko</label>
+                    <textarea id="storeDesc" rows="3"></textarea>
+                </div>
+                <button class="submit-btn" id="submitStore">Buat Toko</button>
+            </div>
+            
+            <div id="storeInfo"></div>
+        </div>
+        
+        <div class="store-section" id="productsSection" style="display: none;">
+            <div class="store-header">
+                <h2>Produk Saya</h2>
+                <button class="create-store-btn" id="addProductBtn">+ Tambah Produk</button>
+            </div>
+            
+            <div class="products-grid" id="productsGrid"></div>
+        </div>
+    </div>
+    
+    <script>
+        let currentUser = null;
+        let currentStore = null;
+        let userProducts = [];
+        
+        // Check login status
+        async function checkAuth() {
+            try {
+                const response = await fetch('/api/me');
+                const data = await response.json();
+                
+                if (data.user) {
+                    currentUser = data.user;
+                    document.getElementById('userName').textContent = currentUser.name;
+                    document.getElementById('userEmail').textContent = currentUser.email;
+                    
+                    // Load store
+                    loadStore();
+                } else {
+                    window.location.href = '/login.html';
+                }
+            } catch (error) {
+                console.error('Auth check failed:', error);
+                window.location.href = '/login.html';
+            }
+        }
+        
+        // Load store
+        async function loadStore() {
+            try {
+                const response = await fetch('/api/my-store');
+                const data = await response.json();
+                
+                if (data.store) {
+                    currentStore = data.store;
+                    displayStoreInfo();
+                    loadProducts();
+                } else {
+                    document.getElementById('storeInfo').innerHTML = '<p style="color: #a0a0b0;">Anda belum punya toko. Buat toko untuk mulai berjualan!</p>';
+                }
+            } catch (error) {
+                console.error('Load store failed:', error);
+            }
+        }
+        
+        // Display store info
+        function displayStoreInfo() {
+            const storeInfo = document.getElementById('storeInfo');
+            storeInfo.innerHTML = `
+                <div class="store-info">
+                    <p><strong>Nama Toko:</strong> ${currentStore.name}</p>
+                    <p><strong>Deskripsi:</strong> ${currentStore.description || '-'}</p>
+                    <p><strong>Total Produk:</strong> ${currentStore.products?.length || 0}</p>
+                    <p><strong>Dibuat:</strong> ${new Date(currentStore.createdAt).toLocaleDateString('id-ID')}</p>
+                </div>
+            `;
+            
+            document.getElementById('productsSection').style.display = 'block';
+            document.getElementById('createStoreBtn').style.display = 'none';
+        }
+        
+        // Load products
+        async function loadProducts() {
+            try {
+                const response = await fetch(`/api/products/store/${currentStore.id}`);
+                const products = await response.json();
+                userProducts = products;
+                displayProducts();
+            } catch (error) {
+                console.error('Load products failed:', error);
+            }
+        }
+        
+        // Display products
+        function displayProducts() {
+            const grid = document.getElementById('productsGrid');
+            
+            if (userProducts.length === 0) {
+                grid.innerHTML = '<p style="color: #a0a0b0; grid-column: 1/-1; text-align: center;">Belum ada produk. Tambah produk pertama Anda!</p>';
+                return;
+            }
+            
+            grid.innerHTML = userProducts.map(product => `
+                <div class="product-card">
+                    <h4>${product.title}</h4>
+                    <p>${product.description.substring(0, 50)}...</p>
+                    <div class="product-price">Rp ${(product.price * 1000000).toLocaleString('id-ID')}</div>
+                    <div class="product-actions">
+                        <button class="edit-btn" onclick="editProduct('${product.id}')">Edit</button>
+                        <button class="delete-btn" onclick="deleteProduct('${product.id}')">Hapus</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Event listeners
+        document.getElementById('createStoreBtn').addEventListener('click', () => {
+            document.getElementById('storeForm').classList.add('show');
+        });
+        
+        document.getElementById('submitStore').addEventListener('click', async () => {
+            const name = document.getElementById('storeName').value;
+            const desc = document.getElementById('storeDesc').value;
+            
+            if (!name) {
+                alert('Nama toko harus diisi');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/create-store', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ storeName: name, storeDescription: desc })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Toko berhasil dibuat!');
+                    location.reload();
+                } else {
+                    alert(data.error || 'Gagal buat toko');
+                }
+            } catch (error) {
+                alert('Terjadi kesalahan');
+            }
+        });
+        
+        document.getElementById('addProductBtn').addEventListener('click', () => {
+            // Redirect ke halaman upload
+            window.location.href = '/index.html#upload';
+        });
+        
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await fetch('/api/logout', { method: 'POST' });
+            window.location.href = '/index.html';
+        });
+        
+        // Edit product
+        window.editProduct = (productId) => {
+            // Implement edit modal
+            alert('Edit product: ' + productId + ' (fitur sedang dikembangkan)');
+        };
+        
+        // Delete product
+        window.deleteProduct = async (productId) => {
+            if (!confirm('Yakin ingin menghapus produk ini?')) return;
+            
+            try {
+                const response = await fetch(`/api/products/${productId}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Produk berhasil dihapus');
+                    loadProducts();
+                } else {
+                    alert(data.error || 'Gagal hapus produk');
+                }
+            } catch (error) {
+                alert('Terjadi kesalahan');
+            }
+        };
+        
+        // Initialize
+        checkAuth();
+    </script>
+</body>
+</html>

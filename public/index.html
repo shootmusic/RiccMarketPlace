@@ -21,242 +21,39 @@
                 <a href="#dashboard">Dashboard</a>
             </div>
             <div class="nav-actions">
-                <button class="icon-btn" id="searchToggle"><i class="fas fa-search"></i></button>
-                <button class="icon-btn" id="cartToggle"><i class="fas fa-shopping-cart"></i></button>
-                <button class="wallet-btn" id="connectWallet">
-                    <i class="fas fa-wallet"></i>
-                    <span>Connect</span>
-                </button>
+                <a href="login.html" class="wallet-btn" style="text-decoration: none;">
+                    <i class="fas fa-user"></i>
+                    <span>Login</span>
+                </a>
+                <a href="register.html" class="wallet-btn" style="text-decoration: none; background: transparent; border: 2px solid #0066ff;">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Daftar</span>
+                </a>
             </div>
         </div>
     </nav>
 
-    <div class="search-overlay" id="searchOverlay">
-        <div class="search-container">
-            <input type="text" placeholder="Cari produk digital..." id="searchInput">
-            <button id="closeSearch"><i class="fas fa-times"></i></button>
-        </div>
-        <div class="search-results" id="searchResults"></div>
-    </div>
-
-    <div class="cart-sidebar" id="cartSidebar">
-        <div class="cart-header">
-            <h3>Cart <span id="cartCount">0</span></h3>
-            <button id="closeCart"><i class="fas fa-times"></i></button>
-        </div>
-        <div class="cart-items" id="cartItems"></div>
-        <div class="cart-footer">
-            <div class="cart-total">
-                <span>Total:</span>
-                <span id="cartTotal">0 ETH</span>
-            </div>
-            <button class="checkout-btn" id="checkoutBtn">Checkout</button>
-        </div>
-    </div>
-
-    <main>
-        <section id="home" class="hero-section">
-            <div class="hero-content">
-                <h1 class="glitch-text" data-text="Digital Product Marketplace">Digital Product Marketplace</h1>
-                <p class="hero-subtitle">Jual & Beli Produk Digital dengan Crypto • PDF • Source Code • Assets • Tools</p>
-                <div class="hero-stats">
-                    <div class="stat-item">
-                        <span class="stat-value" id="totalProducts">0</span>
-                        <span class="stat-label">Products</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-value" id="totalSellers">0</span>
-                        <span class="stat-label">Sellers</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-value" id="totalSales">0</span>
-                        <span class="stat-label">Sales</span>
-                    </div>
-                </div>
-                <div class="hero-actions">
-                    <button class="primary-btn" onclick="scrollToProducts()">
-                        Explore Products <i class="fas fa-arrow-right"></i>
-                    </button>
-                    <button class="secondary-btn" onclick="scrollToUpload()">
-                        Start Selling <i class="fas fa-cloud-upload-alt"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="hero-3d" id="hero3d"></div>
-        </section>
-
-        <section id="products" class="products-section">
-            <div class="section-header">
-                <h2>Digital Products</h2>
-                <div class="filter-bar">
-                    <select id="categoryFilter">
-                        <option value="all">All Categories</option>
-                        <option value="pdf">PDF/Ebooks</option>
-                        <option value="code">Source Code</option>
-                        <option value="assets">Design Assets</option>
-                        <option value="tools">Tools/Scripts</option>
-                        <option value="other">Other</option>
-                    </select>
-                    <select id="sortFilter">
-                        <option value="newest">Newest</option>
-                        <option value="price-low">Price: Low to High</option>
-                        <option value="price-high">Price: High to Low</option>
-                        <option value="popular">Most Popular</option>
-                    </select>
-                    <input type="text" placeholder="Search products..." id="productSearch">
-                </div>
-            </div>
-            <div class="products-grid" id="productsGrid"></div>
-            <div class="load-more">
-                <button id="loadMoreBtn" class="load-more-btn">Load More</button>
-            </div>
-        </section>
-
-        <section id="upload" class="upload-section">
-            <div class="section-header">
-                <h2>Upload Product</h2>
-                <p>Supported formats: PDF, Word, TXT, HTML, PY, ZIP, MP3, MP4, JPG, PNG, GIF, and more</p>
-            </div>
-            
-            <div class="upload-container">
-                <div class="upload-area" id="uploadArea">
-                    <i class="fas fa-cloud-upload-alt"></i>
-                    <h3>Drag & Drop files here</h3>
-                    <p>or</p>
-                    <button class="browse-btn" id="browseBtn">Browse Files</button>
-                    <input type="file" id="fileInput" multiple style="display: none;">
-                    <p class="file-limit">Max file size: 100MB per file</p>
-                </div>
-                
-                <div class="upload-form" id="uploadForm">
-                    <div class="form-group">
-                        <label>Product Title</label>
-                        <input type="text" id="productTitle" placeholder="e.g., Complete Python Course PDF">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Description</label>
-                        <textarea id="productDesc" rows="4" placeholder="Describe your product..."></textarea>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Price (ETH)</label>
-                            <input type="number" id="productPrice" step="0.001" placeholder="0.05">
-                        </div>
-                        <div class="form-group">
-                            <label>Category</label>
-                            <select id="productCategory">
-                                <option value="pdf">PDF/Ebook</option>
-                                <option value="code">Source Code</option>
-                                <option value="assets">Design Assets</option>
-                                <option value="tools">Tools/Scripts</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Tags (comma separated)</label>
-                        <input type="text" id="productTags" placeholder="python, ebook, tutorial">
-                    </div>
-                    
-                    <div class="file-list" id="fileList"></div>
-                    
-                    <div class="form-actions">
-                        <button type="button" class="cancel-btn" id="cancelUpload">Cancel</button>
-                        <button type="button" class="submit-btn" id="submitUpload">Upload Product</button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="dashboard" class="dashboard-section">
-            <div class="section-header">
-                <h2>Seller Dashboard</h2>
-                <button class="refresh-btn" id="refreshDashboard"><i class="fas fa-sync-alt"></i></button>
-            </div>
-            
-            <div class="dashboard-stats">
-                <div class="stat-card">
-                    <i class="fas fa-box"></i>
-                    <div class="stat-info">
-                        <span class="stat-label">My Products</span>
-                        <span class="stat-number" id="myProductsCount">0</span>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <i class="fas fa-download"></i>
-                    <div class="stat-info">
-                        <span class="stat-label">Total Downloads</span>
-                        <span class="stat-number" id="totalDownloads">0</span>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <i class="fas fa-coins"></i>
-                    <div class="stat-info">
-                        <span class="stat-label">Total Earnings</span>
-                        <span class="stat-number" id="totalEarnings">0 ETH</span>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <i class="fas fa-eye"></i>
-                    <div class="stat-info">
-                        <span class="stat-label">Total Views</span>
-                        <span class="stat-number" id="totalViews">0</span>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="dashboard-content">
-                <div class="my-products-list" id="myProductsList">
-                    <h3>My Products</h3>
-                    <div class="products-table"></div>
-                </div>
-                <div class="recent-sales" id="recentSales">
-                    <h3>Recent Sales</h3>
-                    <div class="sales-list"></div>
-                </div>
-            </div>
-        </section>
-    </main>
-
+    <!-- Rest of your existing index.html content -->
+    <!-- ... -->
+    
     <footer>
         <div class="footer-content">
             <div class="footer-section">
                 <h4>Ricc Marketing Place</h4>
-                <p>Decentralized digital product marketplace on Web3</p>
+                <p>Decentralized digital product marketplace</p>
                 <div class="social-links">
-                    <a href="https://github.com/shootmusic" target="_blank"><i class="fab fa-github"></i></a>
-                    <a href="#"><i class="fab fa-twitter"></i></a>
-                    <a href="#"><i class="fab fa-discord"></i></a>
+                    <a href="https://x.com/riocc911" target="_blank"><i class="fab fa-twitter"></i></a>
+                    <a href="https://t.me/SukarnoHatta" target="_blank"><i class="fab fa-telegram"></i></a>
+                    <a href="mailto:shootmusic05@gmail.com"><i class="fas fa-envelope"></i></a>
                 </div>
             </div>
-            <div class="footer-section">
-                <h4>Products</h4>
-                <a href="https://github.com/shootmusic/YouTube-Auto-Subscribe" target="_blank">YouTube Auto Subscribe</a>
-                <a href="https://github.com/shootmusic/YouTube-Auto-Upload" target="_blank">YouTube Auto Upload</a>
-                <a href="https://github.com/shootmusic/Tikok-Automation" target="_blank">TikTok Automation</a>
-            </div>
-            <div class="footer-section">
-                <h4>Support</h4>
-                <a href="#">Documentation</a>
-                <a href="#">API</a>
-                <a href="#">Contact</a>
-            </div>
-            <div class="footer-section">
-                <h4>Legal</h4>
-                <a href="#">Terms</a>
-                <a href="#">Privacy</a>
-                <a href="#">License</a>
-            </div>
+            <!-- Rest of footer -->
         </div>
         <div class="footer-bottom">
             <p>&copy; 2026 Ricc Marketing Place. All rights reserved.</p>
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/web3@1.5.2/dist/web3.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

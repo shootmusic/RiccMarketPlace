@@ -1,345 +1,503 @@
 const express = require('express');
+const session = require('express-session');
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
+const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const cors = require('cors');
-const morgan = require('morgan');
 const crypto = require('crypto');
-const { Web3 } = require('web3');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(cors());
-app.use(morgan('dev'));
+// ============ MIDDLEWARE ============
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Database (JSON files)
+// Session configuration
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'rahasia-default',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { 
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 hari
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production'
+  }
+}));
+
+// Passport initialization
+app.use(passport.initialize());
+app.use(passport.session());
+
+// ============ DATABASE SETUP ============
 const DATA_DIR = path.join(__dirname, 'data');
-const PRODUCTS_FILE = path.join(DATA_DIR, 'products.json');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
-const SALES_FILE = path.join(DATA_DIR, 'sales.json');
+const PRODUCTS_FILE = path.join(DATA_DIR, 'products.json');
+const STORES_FILE = path.join(DATA_DIR, 'stores.json');
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 
 // Ensure directories exist
 [DATA_DIR, UPLOADS_DIR].forEach(dir => {
-    if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-    }
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 });
 
 // Initialize JSON files
-[PRODUCTS_FILE, USERS_FILE, SALES_FILE].forEach(file => {
-    if (!fs.existsSync(file)) {
-        fs.writeFileSync(file, JSON.stringify([]));
-    }
+[USERS_FILE, PRODUCTS_FILE, STORES_FILE].forEach(file => {
+  if (!fs.existsSync(file)) fs.writeFileSync(file, JSON.stringify([]));
 });
 
-// Multer configuration for file uploads
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const uploadDir = path.join(UPLOADS_DIR, req.body.seller || 'anonymous');
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-        }
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        const uniqueSuffix = crypto.randomBytes(16).toString('hex');
-        cb(null, uniqueSuffix + path.extname(file.originalname));
+// ============ AUTHENTICATION ============
+// Serialize user
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+
+// Deserialize user
+passport.deserializeUser(async (id, done) => {
+  try {
+    const users = JSON.parse(fs.readFileSync(USERS_FILE));
+    const user = users.find(u => u.id === id);
+    if (user) {
+      const { password, ...userWithoutPassword } = user;
+      done(null, userWithoutPassword);
+    } else {
+      done(null, null);
     }
+  } catch (error) {
+    done(error, null);
+  }
+});
+
+// Local strategy
+passport.use(new LocalStrategy(
+  { usernameField: 'email' },
+  async (email, password, done) => {
+    try {
+      const users = JSON.parse(fs.readFileSync(USERS_FILE));
+      const user = users.find(u => u.email === email);
+      
+      if (!user) {
+        return done(null, false, { message: 'Email tidak terdaftar' });
+      }
+      
+      const isValid = await bcrypt.compare(password, user.password);
+      if (!isValid) {
+        return done(null, false, { message: 'Password salah' });
+      }
+      
+      const { password: _, ...userWithoutPassword } = user;
+      return done(null, userWithoutPassword);
+    } catch (error) {
+      return done(error);
+    }
+  }
+));
+
+// Middleware untuk cek login
+function isAuthenticated(req, res, next) {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.status(401).json({ error: 'Silakan login dulu' });
+}
+
+// Middleware untuk cek kepemilikan produk
+function isProductOwner(req, res, next) {
+  const { productId } = req.params;
+  const products = JSON.parse(fs.readFileSync(PRODUCTS_FILE));
+  const product = products.find(p => p.id === productId);
+  
+  if (!product) {
+    return res.status(404).json({ error: 'Produk tidak ditemukan' });
+  }
+  
+  if (product.sellerId !== req.user.id) {
+    return res.status(403).json({ error: 'Anda tidak punya akses ke produk ini' });
+  }
+  
+  req.product = product;
+  next();
+}
+
+// ============ API AUTH ============
+// Register
+app.post('/api/register', async (req, res) => {
+  try {
+    const { name, email, password, phone } = req.body;
+    
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Semua field harus diisi' });
+    }
+    
+    const users = JSON.parse(fs.readFileSync(USERS_FILE));
+    
+    // Cek email udah dipake belum
+    if (users.find(u => u.email === email)) {
+      return res.status(400).json({ error: 'Email sudah terdaftar' });
+    }
+    
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Buat user baru
+    const newUser = {
+      id: crypto.randomBytes(16).toString('hex'),
+      name,
+      email,
+      password: hashedPassword,
+      phone: phone || '',
+      role: 'user',
+      balance: 0,
+      store: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    users.push(newUser);
+    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+    
+    // Auto login setelah register
+    req.login(newUser, (err) => {
+      if (err) {
+        return res.status(500).json({ error: 'Login gagal setelah register' });
+      }
+      const { password, ...userWithoutPassword } = newUser;
+      res.json({ 
+        success: true, 
+        user: userWithoutPassword
+      });
+    });
+    
+  } catch (error) {
+    console.error('Register error:', error);
+    res.status(500).json({ error: 'Gagal register' });
+  }
+});
+
+// Login
+app.post('/api/login', passport.authenticate('local'), (req, res) => {
+  res.json({ 
+    success: true, 
+    user: req.user 
+  });
+});
+
+// Logout
+app.post('/api/logout', (req, res) => {
+  req.logout((err) => {
+    if (err) {
+      return res.status(500).json({ error: 'Gagal logout' });
+    }
+    res.json({ success: true });
+  });
+});
+
+// Get current user
+app.get('/api/me', (req, res) => {
+  if (req.user) {
+    res.json({ user: req.user });
+  } else {
+    res.json({ user: null });
+  }
+});
+
+// ============ API STORE ============
+// Buat toko
+app.post('/api/create-store', isAuthenticated, async (req, res) => {
+  try {
+    const { storeName, storeDescription } = req.body;
+    
+    if (!storeName) {
+      return res.status(400).json({ error: 'Nama toko harus diisi' });
+    }
+    
+    const users = JSON.parse(fs.readFileSync(USERS_FILE));
+    const userIndex = users.findIndex(u => u.id === req.user.id);
+    
+    if (users[userIndex].store) {
+      return res.status(400).json({ error: 'Anda sudah punya toko' });
+    }
+    
+    const stores = JSON.parse(fs.readFileSync(STORES_FILE));
+    
+    // Cek nama toko udah dipake belum
+    if (stores.find(s => s.name === storeName)) {
+      return res.status(400).json({ error: 'Nama toko sudah digunakan' });
+    }
+    
+    const newStore = {
+      id: crypto.randomBytes(16).toString('hex'),
+      ownerId: req.user.id,
+      name: storeName,
+      description: storeDescription || '',
+      products: [],
+      balance: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    stores.push(newStore);
+    fs.writeFileSync(STORES_FILE, JSON.stringify(stores, null, 2));
+    
+    // Update user dengan store id
+    users[userIndex].store = newStore.id;
+    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+    
+    res.json({ 
+      success: true, 
+      store: newStore 
+    });
+    
+  } catch (error) {
+    console.error('Create store error:', error);
+    res.status(500).json({ error: 'Gagal buat toko' });
+  }
+});
+
+// Get store by user
+app.get('/api/my-store', isAuthenticated, (req, res) => {
+  try {
+    const stores = JSON.parse(fs.readFileSync(STORES_FILE));
+    const store = stores.find(s => s.ownerId === req.user.id);
+    
+    if (!store) {
+      return res.json({ store: null });
+    }
+    
+    res.json({ store });
+    
+  } catch (error) {
+    console.error('Get store error:', error);
+    res.status(500).json({ error: 'Gagal ambil data toko' });
+  }
+});
+
+// ============ API PRODUCTS ============
+// Upload produk (hanya untuk seller yang punya toko)
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const userDir = path.join(UPLOADS_DIR, req.user.id);
+    if (!fs.existsSync(userDir)) {
+      fs.mkdirSync(userDir, { recursive: true });
+    }
+    cb(null, userDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = crypto.randomBytes(16).toString('hex');
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
 });
 
 const upload = multer({ 
-    storage: storage,
-    limits: { fileSize: 100 * 1024 * 1024 }, // 100MB limit
-    fileFilter: (req, file, cb) => {
-        // Allow all file types
-        cb(null, true);
+  storage: storage,
+  limits: { fileSize: 100 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => cb(null, true)
+}).array('files', 10);
+
+app.post('/api/products', isAuthenticated, (req, res) => {
+  upload(req, res, async (err) => {
+    if (err) {
+      return res.status(400).json({ error: 'Upload gagal: ' + err.message });
     }
+    
+    try {
+      const { title, description, price, category, tags } = req.body;
+      
+      if (!title || !description || !price) {
+        return res.status(400).json({ error: 'Data produk tidak lengkap' });
+      }
+      
+      // Cek user punya toko
+      const users = JSON.parse(fs.readFileSync(USERS_FILE));
+      const user = users.find(u => u.id === req.user.id);
+      
+      if (!user.store) {
+        return res.status(400).json({ error: 'Anda harus buat toko dulu' });
+      }
+      
+      const stores = JSON.parse(fs.readFileSync(STORES_FILE));
+      const store = stores.find(s => s.id === user.store);
+      
+      const products = JSON.parse(fs.readFileSync(PRODUCTS_FILE));
+      
+      const newProduct = {
+        id: crypto.randomBytes(16).toString('hex'),
+        title,
+        description,
+        price: parseFloat(price),
+        category: category || 'other',
+        tags: tags ? tags.split(',').map(t => t.trim()) : [],
+        sellerId: req.user.id,
+        storeId: user.store,
+        storeName: store.name,
+        files: req.files ? req.files.map(f => ({
+          filename: f.filename,
+          originalName: f.originalname,
+          size: f.size,
+          mimetype: f.mimetype,
+          path: f.path
+        })) : [],
+        views: 0,
+        sales: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      products.push(newProduct);
+      fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(products, null, 2));
+      
+      // Update store dengan product id
+      store.products.push(newProduct.id);
+      fs.writeFileSync(STORES_FILE, JSON.stringify(stores, null, 2));
+      
+      res.json({ 
+        success: true, 
+        product: newProduct 
+      });
+      
+    } catch (error) {
+      console.error('Upload product error:', error);
+      res.status(500).json({ error: 'Gagal upload produk' });
+    }
+  });
 });
 
-// Web3 integration
-const web3 = new Web3(process.env.WEB3_PROVIDER || 'http://localhost:8545');
-
-// API Routes
-
-// Get all products
+// Get all products (public)
 app.get('/api/products', (req, res) => {
-    try {
-        const products = JSON.parse(fs.readFileSync(PRODUCTS_FILE));
-        res.json(products);
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to load products' });
-    }
+  try {
+    const products = JSON.parse(fs.readFileSync(PRODUCTS_FILE));
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ error: 'Gagal load products' });
+  }
 });
 
-// Get single product
+// Get products by store
+app.get('/api/products/store/:storeId', (req, res) => {
+  try {
+    const products = JSON.parse(fs.readFileSync(PRODUCTS_FILE));
+    const storeProducts = products.filter(p => p.storeId === req.params.storeId);
+    res.json(storeProducts);
+  } catch (error) {
+    res.status(500).json({ error: 'Gagal load products' });
+  }
+});
+
+// Get single product (public)
 app.get('/api/products/:id', (req, res) => {
-    try {
-        const products = JSON.parse(fs.readFileSync(PRODUCTS_FILE));
-        const product = products.find(p => p.id === req.params.id);
-        
-        if (!product) {
-            return res.status(404).json({ error: 'Product not found' });
-        }
-        
-        // Increment views
-        product.views = (product.views || 0) + 1;
-        fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(products, null, 2));
-        
-        res.json(product);
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to load product' });
+  try {
+    const products = JSON.parse(fs.readFileSync(PRODUCTS_FILE));
+    const product = products.find(p => p.id === req.params.id);
+    
+    if (!product) {
+      return res.status(404).json({ error: 'Produk tidak ditemukan' });
     }
+    
+    // Increment views
+    product.views = (product.views || 0) + 1;
+    fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(products, null, 2));
+    
+    res.json(product);
+  } catch (error) {
+    res.status(500).json({ error: 'Gagal load product' });
+  }
 });
 
-// Upload product
-app.post('/api/upload', upload.array('files', 10), (req, res) => {
-    try {
-        const { title, description, price, category, tags, seller } = req.body;
-        const files = req.files;
-        
-        if (!title || !description || !price || !seller) {
-            return res.status(400).json({ error: 'Missing required fields' });
-        }
-        
-        const products = JSON.parse(fs.readFileSync(PRODUCTS_FILE));
-        
-        const newProduct = {
-            id: crypto.randomBytes(16).toString('hex'),
-            title,
-            description,
-            price: parseFloat(price),
-            category,
-            tags: tags ? tags.split(',').map(t => t.trim()) : [],
-            seller,
-            files: files.map(f => ({
-                filename: f.filename,
-                originalName: f.originalname,
-                size: f.size,
-                mimetype: f.mimetype,
-                path: f.path
-            })),
-            views: 0,
-            sales: 0,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        };
-        
-        products.push(newProduct);
-        fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(products, null, 2));
-        
-        // Update user stats
-        updateUserStats(seller);
-        
-        res.json({ success: true, product: newProduct });
-    } catch (error) {
-        console.error('Upload error:', error);
-        res.status(500).json({ error: 'Upload failed' });
+// Update product (hanya pemilik)
+app.put('/api/products/:productId', isAuthenticated, isProductOwner, async (req, res) => {
+  try {
+    const { title, description, price, category, tags } = req.body;
+    const products = JSON.parse(fs.readFileSync(PRODUCTS_FILE));
+    const productIndex = products.findIndex(p => p.id === req.params.productId);
+    
+    products[productIndex] = {
+      ...products[productIndex],
+      title: title || products[productIndex].title,
+      description: description || products[productIndex].description,
+      price: price ? parseFloat(price) : products[productIndex].price,
+      category: category || products[productIndex].category,
+      tags: tags ? tags.split(',').map(t => t.trim()) : products[productIndex].tags,
+      updatedAt: new Date().toISOString()
+    };
+    
+    fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(products, null, 2));
+    
+    res.json({ 
+      success: true, 
+      product: products[productIndex] 
+    });
+    
+  } catch (error) {
+    console.error('Update product error:', error);
+    res.status(500).json({ error: 'Gagal update produk' });
+  }
+});
+
+// Delete product (hanya pemilik)
+app.delete('/api/products/:productId', isAuthenticated, isProductOwner, async (req, res) => {
+  try {
+    let products = JSON.parse(fs.readFileSync(PRODUCTS_FILE));
+    products = products.filter(p => p.id !== req.params.productId);
+    fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(products, null, 2));
+    
+    // Hapus dari store
+    const stores = JSON.parse(fs.readFileSync(STORES_FILE));
+    const storeIndex = stores.findIndex(s => s.id === req.product.storeId);
+    stores[storeIndex].products = stores[storeIndex].products.filter(id => id !== req.params.productId);
+    fs.writeFileSync(STORES_FILE, JSON.stringify(stores, null, 2));
+    
+    res.json({ success: true });
+    
+  } catch (error) {
+    console.error('Delete product error:', error);
+    res.status(500).json({ error: 'Gagal hapus produk' });
+  }
+});
+
+// ============ PAYMENT MANUAL ============
+app.post('/api/create-manual-payment', (req, res) => {
+  try {
+    const { productId, paymentMethod } = req.body;
+    
+    const products = JSON.parse(fs.readFileSync(PRODUCTS_FILE));
+    const product = products.find(p => p.id === productId);
+    
+    if (!product) {
+      return res.status(404).json({ error: 'Produk tidak ditemukan' });
     }
+    
+    const paymentInfo = {
+      product: product.title,
+      price: product.price,
+      priceRupiah: product.price * 1000000,
+      bankTransfer: [
+        { bank: 'BCA', account: '1234567890', name: 'RICC' },
+        { bank: 'Mandiri', account: '0987654321', name: 'RICC' }
+      ],
+      ewallet: [
+        { name: 'GoPay', number: process.env.GOPAY_NUMBER || '+6281543343778' },
+        { name: 'DANA', number: process.env.GOPAY_NUMBER || '+6281543343778' }
+      ],
+      instructions: 'Transfer sesuai total, kirim bukti ke Telegram/Email'
+    };
+    
+    res.json({ 
+      success: true, 
+      payment: paymentInfo 
+    });
+    
+  } catch (error) {
+    console.error('Payment error:', error);
+    res.status(500).json({ error: 'Gagal buat pembayaran' });
+  }
 });
 
-// Purchase product
-app.post('/api/purchase', async (req, res) => {
-    try {
-        const { productId, buyer, transactionHash } = req.body;
-        
-        const products = JSON.parse(fs.readFileSync(PRODUCTS_FILE));
-        const productIndex = products.findIndex(p => p.id === productId);
-        
-        if (productIndex === -1) {
-            return res.status(404).json({ error: 'Product not found' });
-        }
-        
-        // Record sale
-        const sales = JSON.parse(fs.readFileSync(SALES_FILE));
-        const sale = {
-            id: crypto.randomBytes(16).toString('hex'),
-            productId,
-            buyer,
-            seller: products[productIndex].seller,
-            price: products[productIndex].price,
-            transactionHash,
-            createdAt: new Date().toISOString()
-        };
-        
-        sales.push(sale);
-        fs.writeFileSync(SALES_FILE, JSON.stringify(sales, null, 2));
-        
-        // Update product sales count
-        products[productIndex].sales = (products[productIndex].sales || 0) + 1;
-        fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(products, null, 2));
-        
-        // Update seller stats
-        updateUserStats(products[productIndex].seller);
-        
-        res.json({ success: true, sale });
-    } catch (error) {
-        console.error('Purchase error:', error);
-        res.status(500).json({ error: 'Purchase failed' });
-    }
-});
-
-// Download product
-app.get('/api/download/:productId/:fileId', (req, res) => {
-    try {
-        const { productId, fileId } = req.params;
-        const { wallet } = req.query;
-        
-        const products = JSON.parse(fs.readFileSync(PRODUCTS_FILE));
-        const product = products.find(p => p.id === productId);
-        
-        if (!product) {
-            return res.status(404).json({ error: 'Product not found' });
-        }
-        
-        const file = product.files.find(f => f.filename === fileId);
-        if (!file) {
-            return res.status(404).json({ error: 'File not found' });
-        }
-        
-        // Verify purchase
-        const sales = JSON.parse(fs.readFileSync(SALES_FILE));
-        const hasPurchased = sales.some(s => 
-            s.productId === productId && s.buyer === wallet
-        );
-        
-        if (!hasPurchased && product.seller !== wallet) {
-            return res.status(403).json({ error: 'You must purchase this product first' });
-        }
-        
-        res.download(file.path, file.originalName);
-    } catch (error) {
-        console.error('Download error:', error);
-        res.status(500).json({ error: 'Download failed' });
-    }
-});
-
-// Search products
-app.get('/api/search', (req, res) => {
-    try {
-        const { q } = req.query;
-        const products = JSON.parse(fs.readFileSync(PRODUCTS_FILE));
-        
-        if (!q) {
-            return res.json([]);
-        }
-        
-        const searchTerm = q.toLowerCase();
-        const results = products.filter(p => 
-            p.title.toLowerCase().includes(searchTerm) ||
-            p.description.toLowerCase().includes(searchTerm) ||
-            (p.tags && p.tags.some(tag => tag.toLowerCase().includes(searchTerm)))
-        );
-        
-        res.json(results);
-    } catch (error) {
-        console.error('Search error:', error);
-        res.status(500).json({ error: 'Search failed' });
-    }
-});
-
-// Get stats
-app.get('/api/stats', (req, res) => {
-    try {
-        const products = JSON.parse(fs.readFileSync(PRODUCTS_FILE));
-        const sales = JSON.parse(fs.readFileSync(SALES_FILE));
-        const users = JSON.parse(fs.readFileSync(USERS_FILE));
-        
-        const totalProducts = products.length;
-        const totalSellers = new Set(products.map(p => p.seller)).size;
-        const totalSales = sales.length;
-        
-        // Calculate earnings
-        const earningsBySeller = {};
-        sales.forEach(sale => {
-            earningsBySeller[sale.seller] = (earningsBySeller[sale.seller] || 0) + sale.price;
-        });
-        
-        const stats = {
-            totalProducts,
-            totalSellers,
-            totalSales,
-            earningsBySeller,
-            recentSales: sales.slice(-10).reverse()
-        };
-        
-        res.json(stats);
-    } catch (error) {
-        console.error('Stats error:', error);
-        res.status(500).json({ error: 'Failed to load stats' });
-    }
-});
-
-// Get user stats
-app.get('/api/user/:wallet/stats', (req, res) => {
-    try {
-        const { wallet } = req.params;
-        const products = JSON.parse(fs.readFileSync(PRODUCTS_FILE));
-        const sales = JSON.parse(fs.readFileSync(SALES_FILE));
-        
-        const userProducts = products.filter(p => p.seller === wallet);
-        const userSales = sales.filter(s => s.seller === wallet);
-        const userPurchases = sales.filter(s => s.buyer === wallet);
-        
-        const stats = {
-            products: userProducts.length,
-            totalDownloads: userSales.length,
-            totalEarnings: userSales.reduce((sum, s) => sum + s.price, 0),
-            totalViews: userProducts.reduce((sum, p) => sum + (p.views || 0), 0),
-            productsList: userProducts,
-            salesList: userSales,
-            purchasesList: userPurchases
-        };
-        
-        res.json(stats);
-    } catch (error) {
-        console.error('User stats error:', error);
-        res.status(500).json({ error: 'Failed to load user stats' });
-    }
-});
-
-// Helper function to update user stats
-function updateUserStats(wallet) {
-    try {
-        const users = JSON.parse(fs.readFileSync(USERS_FILE));
-        let user = users.find(u => u.wallet === wallet);
-        
-        if (!user) {
-            user = {
-                wallet,
-                joinedAt: new Date().toISOString(),
-                lastActive: new Date().toISOString()
-            };
-            users.push(user);
-        } else {
-            user.lastActive = new Date().toISOString();
-        }
-        
-        fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
-    } catch (error) {
-        console.error('Update user stats error:', error);
-    }
-}
-
-// Serve frontend
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({ error: 'Something went wrong!' });
-});
-
-// Start server
+// ============ START SERVER ============
 app.listen(PORT, () => {
-    console.log(`Ricc Marketing Place running on http://localhost:${PORT}`);
-    console.log(`Server started at: ${new Date().toLocaleString()}`);
+  console.log(`Ricc Marketing Place running on http://localhost:${PORT}`);
+  console.log(`Server started at: ${new Date().toLocaleString()}`);
 });
