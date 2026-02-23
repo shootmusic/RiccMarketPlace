@@ -244,8 +244,8 @@ Pull requests dipersilahkan! Untuk perubahan besar, buka issue dulu ya.
 
 [![GitHub](https://img.shields.io/badge/GitHub-shootmusic-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/shootmusic)
 [![Email](https://img.shields.io/badge/Email-shootmusic05@gmail.com-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:shootmusic05@gmail.com)
-[![Twitter](https://img.shields.io/badge/Twitter-@shootmusic-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white)](https://twitter.com/shootmusic)
-[![Telegram](https://img.shields.io/badge/Telegram-@shootmusic-26A5E4?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/shootmusic)
+[![Twitter](https://img.shields.io/badge/Twitter-@riocc911-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white)](https://x.com/riocc911)
+[![Telegram](https://img.shields.io/badge/Telegram-@SukarnoHatta-26A5E4?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/SukarnoHatta)
 
 </div>
 
@@ -254,8 +254,6 @@ Pull requests dipersilahkan! Untuk perubahan besar, buka issue dulu ya.
 📊 GitHub Stats
 
 <div align="center">
-
-[![Repo Stats](https://github-readme-stats.vercel.app/api/pin/?username=shootmusic&repo=RiccMarketPlace&theme=tokyonight&show_owner=true&border_color=0066ff)](https://github.com/shootmusic/RiccMarketPlace)
 
 ![Profile Views](https://komarev.com/ghpvc/?username=shootmusic&label=Profile%20Views&color=0066ff&style=flat-square)
 
