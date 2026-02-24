@@ -7,18 +7,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', sans-serif;
             background: #0a0a0f;
             color: white;
         }
-
         .navbar {
             background: #111118;
             border-bottom: 1px solid #222230;
@@ -27,7 +21,6 @@
             justify-content: space-between;
             align-items: center;
         }
-
         .logo {
             font-size: 1.5rem;
             font-weight: 700;
@@ -35,20 +28,14 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-
-        .nav-actions {
-            display: flex;
-            gap: 16px;
-        }
-
         .nav-actions a {
             color: white;
             text-decoration: none;
             padding: 8px 16px;
             border-radius: 8px;
             border: 1px solid #222230;
+            margin-left: 10px;
         }
-
         .dashboard-container {
             display: flex;
             max-width: 1400px;
@@ -56,40 +43,34 @@
             padding: 0 20px;
             gap: 30px;
         }
-
         .sidebar {
             width: 260px;
             background: #111118;
             border: 1px solid #222230;
             border-radius: 16px;
             padding: 24px 0;
+            height: fit-content;
         }
-
         .user-info {
             padding: 0 20px 20px;
             border-bottom: 1px solid #222230;
             margin-bottom: 16px;
         }
-
         .user-name {
             font-weight: 600;
             font-size: 1.1rem;
             margin-bottom: 4px;
         }
-
         .user-email {
             color: #a0a0b0;
             font-size: 0.85rem;
         }
-
         .sidebar-menu {
             list-style: none;
         }
-
         .sidebar-menu li {
             margin-bottom: 4px;
         }
-
         .sidebar-menu a {
             display: flex;
             align-items: center;
@@ -97,40 +78,35 @@
             padding: 12px 20px;
             color: #a0a0b0;
             text-decoration: none;
-            transition: all 0.3s;
             cursor: pointer;
         }
-
         .sidebar-menu a:hover,
         .sidebar-menu a.active {
             background: #1a1a2a;
             color: white;
             border-left: 3px solid #0066ff;
         }
-
         .sidebar-menu a i {
             width: 20px;
             color: #0066ff;
         }
-
         .main-content {
             flex: 1;
         }
-
         .content-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
         }
-
         .content-header h1 {
             font-size: 2rem;
             background: linear-gradient(135deg, white, #a0a0b0);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-
         .btn-primary {
             background: linear-gradient(135deg, #0066ff, #00ccff);
             color: white;
@@ -144,45 +120,64 @@
             align-items: center;
             gap: 8px;
         }
-
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,102,255,0.3);
+        }
         .store-card {
             background: #111118;
             border: 1px solid #222230;
             border-radius: 16px;
-            padding: 30px;
+            padding: 40px 30px;
             text-align: center;
         }
-
         .store-card i {
-            font-size: 3rem;
+            font-size: 4rem;
             color: #0066ff;
-            margin-bottom: 16px;
-        }
-
-        .store-card h3 {
-            margin-bottom: 8px;
-        }
-
-        .store-card p {
-            color: #a0a0b0;
             margin-bottom: 20px;
         }
-
+        .store-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+        .store-card p {
+            color: #a0a0b0;
+            margin-bottom: 25px;
+        }
         .products-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 20px;
         }
-
         .product-card {
             background: #111118;
             border: 1px solid #222230;
             border-radius: 12px;
-            padding: 16px;
+            padding: 20px;
         }
-
+        .product-card h3 {
+            margin-bottom: 10px;
+        }
+        .product-card p {
+            color: #a0a0b0;
+            margin-bottom: 15px;
+        }
+        .product-price {
+            color: #0066ff;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
         .hidden {
-            display: none;
+            display: none !important;
+        }
+        .upload-link {
+            display: inline-block;
+            background: linear-gradient(135deg, #0066ff, #00ccff);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin-top: 15px;
         }
     </style>
 </head>
@@ -218,7 +213,12 @@
                 <div class="content-header">
                     <h1>Semua Produk</h1>
                 </div>
-                <div id="allProducts" class="products-grid"></div>
+                <div id="allProducts" class="products-grid">
+                    <div class="store-card">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Memuat produk...</p>
+                    </div>
+                </div>
             </div>
 
             <!-- STORE TAB -->
@@ -233,7 +233,8 @@
             <div id="products-tab" class="hidden">
                 <div class="content-header">
                     <h1>Produk Saya</h1>
-                    <a href="/" id="uploadProductBtn" class="btn-primary">
+                    <!-- ===== FIX: TOMBOL UPLOAD LANGSUNG KE HALAMAN UPLOAD ===== -->
+                    <a href="/#upload" class="btn-primary">
                         <i class="fas fa-plus"></i> Upload Produk
                     </a>
                 </div>
@@ -280,9 +281,11 @@
                 const res = await fetch('/api/my-store');
                 const data = await res.json();
                 
+                const storeContent = document.getElementById('storeContent');
+                
                 if (data.store) {
                     currentStore = data.store;
-                    document.getElementById('storeContent').innerHTML = `
+                    storeContent.innerHTML = `
                         <div class="store-card">
                             <i class="fas fa-store"></i>
                             <h3>${currentStore.name}</h3>
@@ -291,14 +294,10 @@
                         </div>
                     `;
                     
-                    // Update tombol upload produk - SEKARANG KE HALAMAN UPLOAD YANG BENER
-                    document.getElementById('uploadProductBtn').href = '/#upload';
-                    
-                    // Load produk saya
                     await loadMyProducts();
                 } else {
                     currentStore = null;
-                    document.getElementById('storeContent').innerHTML = `
+                    storeContent.innerHTML = `
                         <div class="store-card">
                             <i class="fas fa-store"></i>
                             <h3>Buka Toko</h3>
@@ -336,12 +335,13 @@
                 container.innerHTML = products.map(p => `
                     <div class="product-card">
                         <h3>${p.title}</h3>
-                        <p>${p.description?.substring(0, 50)}...</p>
-                        <p><strong>Rp ${(p.price * 1000000).toLocaleString()}</strong></p>
+                        <p>${p.description?.substring(0, 60)}...</p>
+                        <div class="product-price">Rp ${(p.price * 1000000).toLocaleString()}</div>
                     </div>
                 `).join('');
             } catch (error) {
                 console.error('Load products error:', error);
+                document.getElementById('allProducts').innerHTML = '<div class="store-card">Gagal memuat produk</div>';
             }
         }
 
@@ -372,7 +372,7 @@
                             <div class="product-card">
                                 <h3>${p.title}</h3>
                                 <p>${p.description?.substring(0, 50)}...</p>
-                                <p><strong>Rp ${(p.price * 1000000).toLocaleString()}</strong></p>
+                                <div class="product-price">Rp ${(p.price * 1000000).toLocaleString()}</div>
                             </div>
                         `).join('')}
                     </div>
@@ -380,6 +380,18 @@
             } catch (error) {
                 console.error('Load my products error:', error);
             }
+        }
+
+        function loadProfile() {
+            const profileContent = document.getElementById('profileContent');
+            profileContent.innerHTML = `
+                <div class="store-card">
+                    <i class="fas fa-user"></i>
+                    <h3>${currentUser?.name}</h3>
+                    <p>Email: ${currentUser?.email}</p>
+                    <p>Member sejak: ${new Date().toLocaleDateString()}</p>
+                </div>
+            `;
         }
 
         async function createStore() {
@@ -416,6 +428,8 @@
             document.getElementById('profile-tab').classList.add('hidden');
             
             document.getElementById(`${tab}-tab`).classList.remove('hidden');
+            
+            if (tab === 'profile') loadProfile();
         }
 
         document.getElementById('logoutBtn').addEventListener('click', async (e) => {
