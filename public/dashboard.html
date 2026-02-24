@@ -4,7 +4,480 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Ricc Market</title>
-    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0f;
+            color: white;
+            min-height: 100vh;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: #111118;
+            border-bottom: 1px solid #222230;
+            padding: 16px 5%;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #0066ff, #00ccff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 16px;
+        }
+
+        .btn-outline {
+            padding: 10px 20px;
+            border: 1px solid #222230;
+            border-radius: 8px;
+            color: white;
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+        }
+
+        .btn-outline:hover {
+            border-color: #0066ff;
+            color: #0066ff;
+        }
+
+        /* Dashboard Layout */
+        .dashboard-container {
+            display: flex;
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 20px;
+            gap: 30px;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: #111118;
+            border: 1px solid #222230;
+            border-radius: 20px;
+            padding: 24px 0;
+            height: fit-content;
+            position: sticky;
+            top: 90px;
+        }
+
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid #222230;
+            margin-bottom: 16px;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+        }
+
+        .user-email {
+            color: #a0a0b0;
+            font-size: 0.85rem;
+            word-break: break-all;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+        }
+
+        .sidebar-menu li {
+            margin-bottom: 4px;
+        }
+
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: #a0a0b0;
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+        }
+
+        .sidebar-menu a:hover,
+        .sidebar-menu a.active {
+            background: #1a1a2a;
+            color: white;
+            border-left: 3px solid #0066ff;
+        }
+
+        .sidebar-menu a i {
+            width: 20px;
+            color: #0066ff;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .content-header h1 {
+            font-size: 2rem;
+            background: linear-gradient(135deg, white, #a0a0b0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #0066ff, #00ccff);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,102,255,0.3);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid #222230;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .btn-secondary:hover {
+            border-color: #0066ff;
+            color: #0066ff;
+        }
+
+        /* Products Grid */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .product-card {
+            background: #111118;
+            border: 1px solid #222230;
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            border-color: #0066ff;
+            box-shadow: 0 10px 30px rgba(0,102,255,0.2);
+        }
+
+        .product-store {
+            color: #00ccff;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .product-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: white;
+        }
+
+        .product-desc {
+            color: #a0a0b0;
+            font-size: 0.85rem;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        .product-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-top: 12px;
+            border-top: 1px solid #222230;
+        }
+
+        .product-price {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #0066ff;
+        }
+
+        .product-sales {
+            color: #a0a0b0;
+            font-size: 0.8rem;
+        }
+
+        .product-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-buy, .btn-detail {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-buy {
+            background: linear-gradient(135deg, #0066ff, #00ccff);
+            color: white;
+        }
+
+        .btn-detail {
+            background: transparent;
+            border: 1px solid #222230;
+            color: white;
+        }
+
+        .btn-buy:hover, .btn-detail:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Store Section */
+        .store-section {
+            background: #111118;
+            border: 1px solid #222230;
+            border-radius: 16px;
+            padding: 30px;
+        }
+
+        .store-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .store-header h2 {
+            font-size: 1.3rem;
+            color: white;
+        }
+
+        .store-info {
+            background: #0a0a0f;
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .store-info p {
+            color: #a0a0b0;
+            margin: 10px 0;
+        }
+
+        .store-info strong {
+            color: white;
+            width: 120px;
+            display: inline-block;
+        }
+
+        .store-form {
+            background: #0a0a0f;
+            padding: 24px;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #a0a0b0;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 14px;
+            background: #111118;
+            border: 1px solid #222230;
+            border-radius: 8px;
+            color: white;
+            font-size: 0.95rem;
+            outline: none;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            border-color: #0066ff;
+        }
+
+        /* My Products Grid */
+        .my-products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 16px;
+        }
+
+        .my-product-card {
+            background: #0a0a0f;
+            border: 1px solid #222230;
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .my-product-card h4 {
+            font-size: 1rem;
+            margin-bottom: 8px;
+            color: white;
+        }
+
+        .my-product-price {
+            color: #0066ff;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin: 12px 0;
+        }
+
+        .my-product-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .edit-btn, .delete-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .edit-btn {
+            background: #0066ff;
+            color: white;
+        }
+
+        .delete-btn {
+            background: #ff3366;
+            color: white;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: #111118;
+            border: 1px solid #222230;
+            border-radius: 16px;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: #222230;
+            margin-bottom: 16px;
+        }
+
+        .empty-state h3 {
+            color: white;
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            color: #a0a0b0;
+            margin-bottom: 20px;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #a0a0b0;
+        }
+
+        .loading i {
+            font-size: 2rem;
+            color: #0066ff;
+            margin-bottom: 10px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .dashboard-container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                position: static;
+            }
+            
+            .content-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .products-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar">
@@ -17,75 +490,325 @@
         </div>
     </nav>
 
-    <div class="dashboard">
+    <div class="dashboard-container">
+        <!-- Sidebar -->
         <div class="sidebar">
-            <a href="#" onclick="showTab('home')" class="active">🏠 Home</a>
-            <a href="#" onclick="showTab('store')">🛒 Toko Saya</a>
-            <a href="#" onclick="showTab('products')">📦 Produk Saya</a>
-            <a href="#" onclick="showTab('profile')">👤 Profil</a>
+            <div class="sidebar-header">
+                <div class="user-name" id="userNameDisplay">Loading...</div>
+                <div class="user-email" id="userEmailDisplay">Loading...</div>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li><a href="#" class="active" onclick="showTab('home'); return false;"><i class="fas fa-home"></i> Home</a></li>
+                <li><a href="#" onclick="showTab('store'); return false;"><i class="fas fa-store"></i> Toko Saya</a></li>
+                <li><a href="#" onclick="showTab('products'); return false;"><i class="fas fa-box"></i> Produk Saya</a></li>
+                <li><a href="#" onclick="showTab('profile'); return false;"><i class="fas fa-user"></i> Profil</a></li>
+            </ul>
         </div>
         
-        <div class="content">
-            <div id="home-tab">
-                <h2>Semua Produk</h2>
-                <div id="allProducts"></div>
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- HOME TAB -->
+            <div id="home-tab" class="tab-content">
+                <div class="content-header">
+                    <h1>Semua Produk</h1>
+                </div>
+                <div class="products-grid" id="allProductsGrid">
+                    <div class="loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Memuat produk...</p>
+                    </div>
+                </div>
             </div>
-            <div id="store-tab" style="display:none">
-                <h2>Toko Saya</h2>
-                <div id="storeContent"></div>
+            
+            <!-- STORE TAB -->
+            <div id="store-tab" class="tab-content" style="display: none;">
+                <div class="content-header">
+                    <h1>Toko Saya</h1>
+                </div>
+                <div class="store-section" id="storeSection">
+                    <div class="loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Memuat toko...</p>
+                    </div>
+                </div>
             </div>
-            <div id="products-tab" style="display:none">
-                <h2>Produk Saya</h2>
-                <div id="myProducts"></div>
+            
+            <!-- PRODUCTS TAB (Produk Saya) -->
+            <div id="products-tab" class="tab-content" style="display: none;">
+                <div class="content-header">
+                    <h1>Produk Saya</h1>
+                    <a href="/#upload" class="btn-primary">
+                        <i class="fas fa-plus"></i> Upload Produk
+                    </a>
+                </div>
+                <div id="myProductsContainer"></div>
             </div>
-            <div id="profile-tab" style="display:none">
-                <h2>Profil Saya</h2>
-                <div id="profileContent"></div>
+            
+            <!-- PROFILE TAB -->
+            <div id="profile-tab" class="tab-content" style="display: none;">
+                <div class="content-header">
+                    <h1>Profil Saya</h1>
+                </div>
+                <div class="store-section" id="profileSection">
+                    <div class="loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Memuat profil...</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        let user = null;
-        
+        let currentUser = null;
+        let currentStore = null;
+        let allProducts = [];
+
+        // Check auth
         async function checkAuth() {
-            const res = await fetch('/api/me');
-            const data = await res.json();
-            if (!data.user) window.location.href = '/login.html';
-            user = data.user;
-            loadAllProducts();
+            try {
+                const res = await fetch('/api/me');
+                const data = await res.json();
+                
+                if (data.user) {
+                    currentUser = data.user;
+                    document.getElementById('userNameDisplay').textContent = currentUser.name;
+                    document.getElementById('userEmailDisplay').textContent = currentUser.email;
+                    
+                    await loadAllProducts();
+                    await loadStoreInfo();
+                    await loadMyProducts();
+                    loadProfileInfo();
+                } else {
+                    window.location.href = '/login.html';
+                }
+            } catch (error) {
+                console.error('Auth error:', error);
+                window.location.href = '/login.html';
+            }
         }
-        
+
+        // Load all products
         async function loadAllProducts() {
-            const res = await fetch('/api/products');
-            const products = await res.json();
-            document.getElementById('allProducts').innerHTML = products.map(p => `
+            try {
+                const res = await fetch('/api/products');
+                allProducts = await res.json();
+                displayProducts(allProducts);
+            } catch (error) {
+                console.error('Load products error:', error);
+            }
+        }
+
+        function displayProducts(products) {
+            const grid = document.getElementById('allProductsGrid');
+            
+            if (products.length === 0) {
+                grid.innerHTML = '<div class="empty-state"><i class="fas fa-box-open"></i><h3>Belum ada produk</h3></div>';
+                return;
+            }
+            
+            grid.innerHTML = products.map(p => `
                 <div class="product-card">
-                    <h3>${p.title}</h3>
-                    <p>${p.description.substring(0, 50)}...</p>
-                    <div>Rp ${(p.price * 1000000).toLocaleString()}</div>
-                    <button onclick="buyProduct('${p.id}')">Beli</button>
+                    <span class="product-store">${p.storeName || 'TOKO RICC'}</span>
+                    <h3 class="product-title">${p.title}</h3>
+                    <p class="product-desc">${p.description.substring(0, 60)}...</p>
+                    <div class="product-meta">
+                        <span class="product-price">Rp ${(p.price * 1000000).toLocaleString('id-ID')}</span>
+                        <span class="product-sales">${p.sales || 0} sold</span>
+                    </div>
+                    <div class="product-actions">
+                        <button class="btn-detail" onclick="showDetail('${p.id}')">Detail</button>
+                        <button class="btn-buy" onclick="buyProduct('${p.id}')">Beli</button>
+                    </div>
                 </div>
             `).join('');
         }
-        
-        window.buyProduct = (id) => {
-            alert('Fitur pembayaran menyusul');
+
+        // Load store info
+        async function loadStoreInfo() {
+            try {
+                const res = await fetch('/api/my-store');
+                const data = await res.json();
+                
+                const section = document.getElementById('storeSection');
+                
+                if (data.store) {
+                    currentStore = data.store;
+                    section.innerHTML = `
+                        <div class="store-header">
+                            <h2>${currentStore.name}</h2>
+                        </div>
+                        <div class="store-info">
+                            <p><strong>Deskripsi:</strong> ${currentStore.description || '-'}</p>
+                            <p><strong>Total Produk:</strong> ${currentStore.products?.length || 0}</p>
+                        </div>
+                    `;
+                } else {
+                    section.innerHTML = `
+                        <div class="store-header">
+                            <h2>Buka Toko</h2>
+                            <button class="btn-primary" onclick="showStoreForm()">Buka Toko</button>
+                        </div>
+                        <div id="storeFormContainer"></div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Load store error:', error);
+            }
+        }
+
+        window.showStoreForm = () => {
+            const container = document.getElementById('storeFormContainer');
+            container.innerHTML = `
+                <div class="store-form">
+                    <h3>Buat Toko Baru</h3>
+                    <div class="form-group">
+                        <label>Nama Toko</label>
+                        <input type="text" id="storeName" placeholder="Contoh: Toko RICC">
+                    </div>
+                    <div class="form-group">
+                        <label>Deskripsi</label>
+                        <textarea id="storeDesc" rows="3" placeholder="Jelaskan toko Anda..."></textarea>
+                    </div>
+                    <button class="btn-primary" onclick="createStore()">Buat Toko</button>
+                </div>
+            `;
         };
-        
+
+        window.createStore = async () => {
+            const name = document.getElementById('storeName').value;
+            const desc = document.getElementById('storeDesc').value;
+            
+            if (!name) {
+                alert('Nama toko harus diisi');
+                return;
+            }
+            
+            try {
+                const res = await fetch('/api/create-store', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ storeName: name, storeDescription: desc })
+                });
+                
+                const data = await res.json();
+                
+                if (data.success) {
+                    alert('Toko berhasil dibuat!');
+                    loadStoreInfo();
+                } else {
+                    alert(data.error || 'Gagal buat toko');
+                }
+            } catch (error) {
+                alert('Gagal buat toko');
+            }
+        };
+
+        // Load my products
+        async function loadMyProducts() {
+            const container = document.getElementById('myProductsContainer');
+            
+            if (!currentStore) {
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-store"></i><h3>Buka toko dulu</h3><p>Buat toko untuk mulai menjual</p><button class="btn-primary" onclick="showTab(\'store\')">Buka Toko</button></div>';
+                return;
+            }
+            
+            try {
+                const res = await fetch(`/api/products/store/${currentStore.id}`);
+                const products = await res.json();
+                
+                if (products.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><i class="fas fa-box-open"></i><h3>Belum ada produk</h3><p><a href="/#upload" class="btn-primary">Upload Produk</a></p></div>';
+                    return;
+                }
+                
+                container.innerHTML = `
+                    <div class="my-products-grid">
+                        ${products.map(p => `
+                            <div class="my-product-card">
+                                <h4>${p.title}</h4>
+                                <p class="product-desc">${p.description.substring(0, 40)}...</p>
+                                <div class="my-product-price">Rp ${(p.price * 1000000).toLocaleString('id-ID')}</div>
+                                <div class="my-product-actions">
+                                    <button class="edit-btn" onclick="editProduct('${p.id}')">Edit</button>
+                                    <button class="delete-btn" onclick="deleteProduct('${p.id}')">Hapus</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Load my products error:', error);
+            }
+        }
+
+        // Load profile
+        function loadProfileInfo() {
+            const section = document.getElementById('profileSection');
+            section.innerHTML = `
+                <div class="store-info">
+                    <p><strong>Nama:</strong> ${currentUser?.name}</p>
+                    <p><strong>Email:</strong> ${currentUser?.email}</p>
+                    <p><strong>No. HP:</strong> ${currentUser?.phone || '-'}</p>
+                    <p><strong>Member sejak:</strong> ${new Date(currentUser?.createdAt).toLocaleDateString('id-ID')}</p>
+                </div>
+            `;
+        }
+
+        // Tab switching
         window.showTab = (tab) => {
-            document.querySelectorAll('.content > div').forEach(d => d.style.display = 'none');
+            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
             document.getElementById(`${tab}-tab`).style.display = 'block';
-            document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+            
+            document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
             event.target.classList.add('active');
+            
+            if (tab === 'home') loadAllProducts();
+            if (tab === 'store') loadStoreInfo();
+            if (tab === 'products') loadMyProducts();
         };
-        
-        document.getElementById('logoutBtn').onclick = async (e) => {
+
+        // Actions
+        window.showDetail = (id) => {
+            alert('Fitur detail menyusul');
+        };
+
+        window.buyProduct = (id) => {
+            const product = allProducts.find(p => p.id === id);
+            alert(`Beli ${product.title}\n\nTransfer ke:\nBCA: 1234567890 a/n RICC\nGoPay: 081543343778\n\nKirim bukti ke Telegram`);
+        };
+
+        window.editProduct = (id) => {
+            alert('Fitur edit menyusul');
+        };
+
+        window.deleteProduct = async (id) => {
+            if (!confirm('Yakin ingin hapus produk ini?')) return;
+            
+            try {
+                const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+                const data = await res.json();
+                
+                if (data.success) {
+                    alert('Produk dihapus');
+                    loadMyProducts();
+                } else {
+                    alert(data.error || 'Gagal hapus');
+                }
+            } catch (error) {
+                alert('Gagal hapus');
+            }
+        };
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', async (e) => {
             e.preventDefault();
             await fetch('/api/logout', { method: 'POST' });
             window.location.href = '/';
-        };
-        
+        });
+
+        // Initialize
         checkAuth();
     </script>
 </body>
